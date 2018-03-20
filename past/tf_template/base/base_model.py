@@ -1,8 +1,7 @@
 import logging
 import tensorflow as tf
 
-from base.base_config import Config
-# from base.base_mode import ModeKeys
+from huaytools.tf_temp.utils.Config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -12,54 +11,34 @@ class BaseModel(object):
     Attributes:
         config(Config): The bunch config of model.
         graph(tf.Graph): The graph of model, default to use the `tf.get_default_graph()`.
-        mode(ModeKeys): Default is `ModeKeys.TRAIN`. Other mode are `EVAL`, `PREDICT` and `RETRAIN`
-            `RETRAIN` means load from a checkpoint, then it need not to run the `self.init_op` again.
+        feature_columns(list of tf.feature_column): a new feature of tensorflow.
+            If you are not familiar with it, let it be None.
+            ref: https://www.tensorflow.org/versions/master/get_started/feature_columns
     """
-    class ModeKeys(object):
-        """
-        Standard names for model modes.
 
-            * `TRAIN`: training mode.
-            * `EVAL`: evaluation mode.
-            * `PREDICT`: inference mode.
-            * `RETRAIN`: retrain mode(new added).
-
-            ref: https://www.tensorflow.org/versions/master/api_docs/python/tf/estimator/ModeKeys
-        """
-
-        TRAIN = 'train'
-        EVAL = 'eval'
-        PREDICT = 'infer'
-        RETRAIN = 'retrain'
-
-    def __init__(self, config, graph=None):
+    def __init__(self, config, feature_columns=None, graph=None):
         self.config = config
+        self.feature_columns = feature_columns
 
         if graph is None:
             self.graph = tf.get_default_graph()
-        else:
-            self.graph = graph
 
-        self.build_model()
-        self.init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+        self.ds_iter = None
+        self._init_global_step()
+        self.saver = None
+        # self._init_saver()
 
-        self.mode = self.ModeKeys.TRAIN
+    def set_ds_iter(self, ds_iter):
+        self.ds_iter = ds_iter
 
-    def build_model(self):
-        """All the variable you want to save should be under the `self.graph`."""
-        with self.graph.as_default():
-            self._init_global_step()
-            self._init_graph()
-            self._init_saver()
-
-    def _init_graph(self):
+    def _init_graph(self, features, labels=None):
         """
         The basic part:
-            0. the `tf.placeholder`
-            1. the net
-            2. the output (self.logits & self.prediction)
-            3. the loss (self.loss)
-            4. the train_op (self.train_op)
+            1. the model/net
+            2. the output(self.logits & self.prediction)
+            3. the loss(self.loss)
+            4. the train_op(self.train_op)
+            5. **init the saver**
         other:
             the metrics(such as `tf.metrics.accuracy`)
             the summary(ref `tf.summary.FileWriter`)
@@ -86,29 +65,12 @@ class BaseModel(object):
 
         raise NotImplementedError
 
-    def train(self, sess, dataset, *args, **kwargs):
+    def train(self, sess, ds_iter, *args, **kwargs):
         """
-        Examples:
-            ```
-            if self.mode == self.ModeKeys.TRAIN:
-                sess.run(self.init_op)
-
-            for _ in range(self.config.n_epoch):
-                ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
-                while True:
-                    try:
-                        features, labels = sess.run(ds_iter.get_next())
-                        loss_val, _ = sess.run([self.loss, self.train_op], feed_dict={self.features: features,
-                                                                                      self.labels: labels})
-                        logger.info("The loss of Step {} is {}".format(sess.run(self.global_step), loss_val))
-                    except tf.errors.OutOfRangeError:
-                        break
-                self.save(sess)
-            ```
 
         Args:
             sess(tf.Session):
-            dataset(tf.data.Dataset): need to yield a tuple (features, labels)
+            ds_iter(tf.data.Iterator): need to yield both the features and labels
                 `features, labels = ds_iter.get_next()`
             *args: reserve
             **kwargs: reserve
@@ -118,12 +80,12 @@ class BaseModel(object):
         """
         raise NotImplementedError
 
-    def evaluate(self, sess, dataset, *args, **kwargs):
+    def evaluate(self, sess, ds_iter, *args, **kwargs):
         """
 
         Args:
             sess(tf.Session):
-            dataset(tf.data.Dataset): need to yield a tuple (features, labels) (same as train)
+            ds_iter(tf.data.Iterator): need to yield both the features and labels (same as train)
                 `features, labels = ds_iter.get_next()`
             *args: reserve
             **kwargs: reserve
@@ -133,12 +95,12 @@ class BaseModel(object):
         """
         raise NotImplementedError
 
-    def predict(self, sess, dataset, *args, **kwargs):
+    def predict(self, sess, ds_iter, *args, **kwargs):
         """
 
         Args:
             sess(tf.Session):
-            dataset(tf.data.Dataset): need to yield only the features
+            ds_iter(tf.data.Iterator): need to yield only the features
                 `features = ds_iter.get_next()`
             *args: reserve
             **kwargs: reserve
@@ -150,24 +112,29 @@ class BaseModel(object):
         raise NotImplementedError
 
     def _init_global_step(self, name='global_step', **kwargs):
-        """"""
-        self.global_step = tf.Variable(0, trainable=False, name=name, **kwargs)
+        """
+        All the variable you want to save should be under the `self.graph`.
+        """
+        with self.graph.as_default():
+            self.global_step = tf.Variable(0, trainable=False, name=name, **kwargs)
 
     def _init_saver(self, *args, **kwargs):
         """
-        The saver must be define under the `self.graph` and init at the last of the graph,
+        The saver must be under the `self.graph` and init at the last of the graph,
             otherwise it can't find the variables under the graph.
-        Just copy the the examples to the subclass
+        Just copy the the examples in the subclass
+            If implement it in the base class, it may not be intellisensed in the subclass.
+            Unless you change the function name to `init_saver()`, but I think it should be a private function.
 
         Examples:
             ```
-            self.saver = tf.train.Saver(*args, **kwargs)
+            with self.graph.as_default():
+                self.saver = tf.train.Saver(*args, **kwargs)
             ```
         """
-        self.saver = tf.train.Saver(*args, **kwargs)
+        raise NotImplementedError
 
     def load(self, sess, ckpt_dir=None):
-        """"""
         if ckpt_dir is None:
             ckpt_dir = self.config.ckpt_dir
             assert ckpt_dir is not None, "`ckpt_dir` is None!"
@@ -177,7 +144,6 @@ class BaseModel(object):
             logger.info("Loading the latest model from checkpoint: {} ...\n".format(latest_ckpt))
             self.saver.restore(sess, latest_ckpt)
             logger.info("model loaded")
-            self.mode = self.ModeKeys.RETRAIN
         else:
             logger.info("No model checkpoint\n")
 

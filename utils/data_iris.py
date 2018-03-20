@@ -1,60 +1,51 @@
-"""
-fast get data from ../data/iris
-"""
+import csv
 import tensorflow as tf
+import numpy as np
 
 
-def _parse_line(line):
-    # Decode the line into its fields
-    fields = tf.decode_csv(line, record_defaults=[[0.0], [0.0], [0.0], [0.0], [0]])
-
-    # Pack the result into a dictionary
-    features = dict(zip(['SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth', 'Species'],
-                        fields))
-
-    # Separate the label from the features
-    label = features.pop('Species')
-
-    return features, label
+def csv_yield(csv_path):
+    with open(csv_path, newline='') as f:
+        next(f)  # skip the first line
+        reader = csv.reader(f)
+        for line in reader:
+            feature, label = [float(i) for i in line[:-1]], int(line[-1])
+            yield feature, label
 
 
-def _parse_csv(csv_path, n_epoch=1, n_batch=12, buffer_size=1000):
-    dataset = tf.data.TextLineDataset(csv_path).skip(1).map(_parse_line)
-
-    # dataset = dataset.shuffle(buffer_size).repeat(n_epoch).batch(n_batch)
-    dataset = dataset.repeat(n_epoch).batch(n_batch)
-
-    ds_iter = dataset.make_initializable_iterator()
-
-    return ds_iter
-
-
-def get_train_ds_iter(
-        csv_path=r"..\data\iris\iris_training.csv"):
-    return _parse_csv(csv_path)
-
-
-def get_eval_ds_iter(
-        csv_path=r"..\data\iris\iris_test.csv"):
-    return _parse_csv(csv_path)
-
-
-def get_pred_ds_iter():
-    predict_x = {
-        'SepalLength': [5.1, 5.9, 6.9],
-        'SepalWidth': [3.3, 3.0, 3.1],
-        'PetalLength': [1.7, 4.2, 5.4],
-        'PetalWidth': [0.5, 1.5, 2.1],
-    }
-    expected_y = ['Setosa', 'Versicolor', 'Virginica']
-
-    return tf.data.Dataset.from_tensor_slices(predict_x).batch(16).make_one_shot_iterator()
+def get_dataset(mode):
+    if mode == 'train':
+        return tf.data.Dataset.from_generator(
+            lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\data\iris\iris_training.csv"),
+            output_types=(tf.float32, tf.int32))
+    elif mode == 'eval':
+        return tf.data.Dataset.from_generator(
+            lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\data\iris\iris_test.csv"),
+            output_types=(tf.float32, tf.int32))
+    else:
+        data = [[5.1, 5.9, 6.9], [3.3, 3.0, 3.1], [1.7, 4.2, 5.4], [0.5, 1.5, 2.1]]
+        data = np.array(data).T
+        expected_y = ['Setosa', 'Versicolor', 'Virginica']
+        return tf.data.Dataset.from_tensor_slices(data)
 
 
 if __name__ == '__main__':
-    ds_iter = get_train_ds_iter()
+
+    ds = tf.data.Dataset.from_generator(
+        lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\data\iris\iris_training.csv"),
+        output_types=(tf.float32, tf.int32)).batch(12)
+    print(ds.output_shapes)
+
+    ds_iter = ds.make_one_shot_iterator()
+
+    data = [[5.1, 5.9, 6.9],
+            [3.3, 3.0, 3.1],
+            [1.7, 4.2, 5.4],
+            [0.5, 1.5, 2.1]]
+    data = np.array(data).T
+    ds2_iter = tf.data.Dataset.from_tensor_slices(data).batch(12).make_one_shot_iterator()
 
     with tf.Session() as sess:
-        print(get_train_ds_iter().output_shapes)
-        print(get_eval_ds_iter().output_shapes)
-        print(get_pred_ds_iter().output_shapes)
+        print(sess.run(ds_iter.get_next()))
+        print(sess.run(ds2_iter.get_next()))
+
+
