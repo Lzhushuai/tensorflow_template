@@ -12,7 +12,7 @@ Actually, this proj can not work better than it. It just makes the process more 
 
 ## Quick Start
 
-The example is about the iris classification question.
+The example is about the iris classification question. You can find the data and code at [examples](./examples)
 
 1. Create a model class which inherit the [BaseModel](./base/base_model.py)
     ```python
@@ -50,7 +50,7 @@ The example is about the iris classification question.
         net = self.features  # input_layer
         for units in self.config.n_units:
             net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
-            # net = tf.layers.Dense(units=self.config.n_units[0], activation=tf.nn.relu)(net)
+            # net = tf.layers.Dense(units=units, activation=tf.nn.relu)(net)
     
         self.logits = tf.layers.dense(net, self.config.n_class, activation=None)
         self.prediction = tf.argmax(self.logits, axis=1)
@@ -169,3 +169,9 @@ The example is about the iris classification question.
         pred_ret = model.predict(ds_predict)
         print(pred_ret)
     ```
+    
+## Contributing
+
+I always want to replace the `tf.placeholder` with `tf.data.Dataset` but no idea. 
+You can see my trouble at [stackoverflow](https://stackoverflow.com/questions/49355553/how-to-write-a-template-for-most-tensorflow-deep-learning-project?answertab=votes#tab-top).
+If you have a good resolvent, welcome it.

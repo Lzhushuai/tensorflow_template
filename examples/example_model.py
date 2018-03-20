@@ -23,7 +23,7 @@ class ExampleModel(BaseModel):
         net = self.features  # input_layer
         for units in self.config.n_units:
             net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
-            # net = tf.layers.Dense(units=self.config.n_units[0], activation=tf.nn.relu)(net)
+            # net = tf.layers.Dense(units=units, activation=tf.nn.relu)(net)
 
         self.logits = tf.layers.dense(net, self.config.n_class, activation=None)
         self.prediction = tf.argmax(self.logits, axis=1)
