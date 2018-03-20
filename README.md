@@ -134,7 +134,9 @@ The example is about the iris classification question. You can find the data and
     ```
     
 5. Run it
-
+    
+    Here `Config` is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
+    
     ```python
     if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
