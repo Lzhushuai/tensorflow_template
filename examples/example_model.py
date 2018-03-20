@@ -116,8 +116,8 @@ if __name__ == '__main__':
 
     logger.debug(model.global_step)
 
-    # model.train(ds_train)
-    # logger.debug(model.global_step)
+    model.train(ds_train)
+    logger.debug(model.global_step)
 
     acc_ret = model.evaluate(ds_eval)
     print(acc_ret)
