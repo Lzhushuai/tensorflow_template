@@ -1,7 +1,7 @@
 import os
 import huaytools as hy
 import tensorflow as tf
-from example.example_model import ExampleModel
+from examples.example_model import ExampleModel
 from base.base_config import Config
 from utils.data_iris_fc import *
 

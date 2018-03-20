@@ -14,6 +14,7 @@ class BaseModel(object):
         graph(tf.Graph): The graph of model, default to use the `tf.get_default_graph()`.
         mode(ModeKeys): Default is `ModeKeys.TRAIN`. Other mode are `EVAL`, `PREDICT` and `RETRAIN`
             `RETRAIN` means load from a checkpoint, then it need not to run the `self.init_op` again.
+            Actually, this attr has no use at this version.
     """
     class ModeKeys(object):
         """
@@ -28,8 +29,8 @@ class BaseModel(object):
         """
 
         TRAIN = 'train'
-        EVAL = 'eval'
-        PREDICT = 'infer'
+        EVAL = 'eval/test/validate'
+        PREDICT = 'infer/predict'
         RETRAIN = 'retrain'
 
     def __init__(self, config, graph=None):
@@ -40,10 +41,12 @@ class BaseModel(object):
         else:
             self.graph = graph
 
-        self.build_model()
-        self.init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+        self.sess = tf.Session(graph=self.graph, config=self.config.sess_config)
 
         self.mode = self.ModeKeys.TRAIN
+
+        self.build_model()
+        self.init_global_variables()
 
     def build_model(self):
         """All the variable you want to save should be under the `self.graph`."""
@@ -51,6 +54,11 @@ class BaseModel(object):
             self._init_global_step()
             self._init_graph()
             self._init_saver()
+
+    def init_global_variables(self):
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+        self.sess.run(init_op)
+        logger.debug("Uninitialized_variables are {}".format(self.sess.run(tf.report_uninitialized_variables())))
 
     def _init_graph(self):
         """
@@ -80,13 +88,13 @@ class BaseModel(object):
                     self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=self.logits)
 
                     optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-                    self.train_op = optimizer.minimize(self.loss, global_step=tf.train.get_global_step())
+                    self.train_op = optimizer.minimize(self.loss, global_step=self._global_step)
             ```
         """
 
         raise NotImplementedError
 
-    def train(self, sess, dataset, *args, **kwargs):
+    def train(self, dataset, *args, **kwargs):
         """
         Examples:
             ```
@@ -100,14 +108,13 @@ class BaseModel(object):
                         features, labels = sess.run(ds_iter.get_next())
                         loss_val, _ = sess.run([self.loss, self.train_op], feed_dict={self.features: features,
                                                                                       self.labels: labels})
-                        logger.info("The loss of Step {} is {}".format(sess.run(self.global_step), loss_val))
+                        logger.info("The loss of Step {} is {}".format(self.global_step, loss_val))
                     except tf.errors.OutOfRangeError:
                         break
                 self.save(sess)
             ```
 
         Args:
-            sess(tf.Session):
             dataset(tf.data.Dataset): need to yield a tuple (features, labels)
                 `features, labels = ds_iter.get_next()`
             *args: reserve
@@ -118,11 +125,10 @@ class BaseModel(object):
         """
         raise NotImplementedError
 
-    def evaluate(self, sess, dataset, *args, **kwargs):
+    def evaluate(self, dataset, *args, **kwargs):
         """
 
         Args:
-            sess(tf.Session):
             dataset(tf.data.Dataset): need to yield a tuple (features, labels) (same as train)
                 `features, labels = ds_iter.get_next()`
             *args: reserve
@@ -133,11 +139,10 @@ class BaseModel(object):
         """
         raise NotImplementedError
 
-    def predict(self, sess, dataset, *args, **kwargs):
+    def predict(self, dataset, *args, **kwargs):
         """
 
         Args:
-            sess(tf.Session):
             dataset(tf.data.Dataset): need to yield only the features
                 `features = ds_iter.get_next()`
             *args: reserve
@@ -151,7 +156,7 @@ class BaseModel(object):
 
     def _init_global_step(self, name='global_step', **kwargs):
         """"""
-        self.global_step = tf.Variable(0, trainable=False, name=name, **kwargs)
+        self._global_step = tf.Variable(0, trainable=False, name=name, **kwargs)
 
     def _init_saver(self, *args, **kwargs):
         """
@@ -166,7 +171,7 @@ class BaseModel(object):
         """
         self.saver = tf.train.Saver(*args, **kwargs)
 
-    def load(self, sess, ckpt_dir=None):
+    def load(self, ckpt_dir=None):
         """"""
         if ckpt_dir is None:
             ckpt_dir = self.config.ckpt_dir
@@ -174,22 +179,27 @@ class BaseModel(object):
 
         latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)
         if latest_ckpt:
+            # sess.run(self._init_op)
             logger.info("Loading the latest model from checkpoint: {} ...\n".format(latest_ckpt))
-            self.saver.restore(sess, latest_ckpt)
+            self.saver.restore(self.sess, latest_ckpt)
             logger.info("model loaded")
             self.mode = self.ModeKeys.RETRAIN
         else:
             logger.info("No model checkpoint\n")
 
-    def save(self, sess, ckpt_dir=None, **kwargs):
+    def save(self, ckpt_dir=None, **kwargs):
         """"""
         if ckpt_dir is None:
             ckpt_dir = self.config.ckpt_dir
             assert ckpt_dir is not None, "`ckpt_dir` is None!"
 
         logger.info("Saving model...")
-        self.saver.save(sess, ckpt_dir, self.global_step, **kwargs)
+        self.saver.save(self.sess, ckpt_dir, self._global_step, **kwargs)
         logger.info("Model is saved.")
+
+    @property
+    def global_step(self):
+        return self._global_step.eval(self.sess)
 
 
 if __name__ == '__main__':

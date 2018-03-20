@@ -2,23 +2,41 @@ import numpy as np
 import tensorflow as tf
 
 
-class DataGenerator:
-    def __init__(self):
-        # load data here
-        self.input = np.ones((500, 784))
-        self.y = np.ones((500, 10))
+class ExModel(object):
+    def __init__(self, graph=None):
 
-    def next_batch(self, batch_size):
-        idx = np.random.choice(500, batch_size)
-        yield self.input[idx], self.y[idx]
+        if graph is None:
+            self.graph = tf.get_default_graph()
+        else:
+            self.graph = graph
 
+        self.sess = tf.Session(graph=self.graph)
+
+        self.build_model()
+
+        print(self.sess.run(tf.report_uninitialized_variables()))  # [b'global_step']
+        print(self.sess.run(self._global_step))  # uninitialized error
+
+    def build_model(self):
+        with self.graph.as_default():
+            self._global_step = tf.Variable(0, trainable=False, name='global_step')
+
+        self.init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+        self.sess.run(self.init_op)
 
 if __name__ == '__main__':
-    data = DataGenerator()
-    batch_x, batch_y = next(data.next_batch(2))
-    print(batch_x, batch_y)
+    model = ExModel()
 
-    ds_iter = tf.data.Dataset.from_tensor_slices([[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]]).repeat(2).batch(12).make_one_shot_iterator()
+    graph = tf.get_default_graph()
 
-    with tf.Session() as sess:
-        print(ds_iter.get_next().eval())
+    sess = tf.Session(graph=graph)
+
+    with graph.as_default():
+        global_step = tf.Variable(0, trainable=False, name='global_step')
+
+    init_op = tf.global_variables_initializer()
+    sess.run(init_op)
+
+    # sess.run(tf.global_variables_initializer())
+    print(sess.run(global_step))
+

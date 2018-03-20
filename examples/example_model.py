@@ -38,45 +38,72 @@ class ExampleModel(BaseModel):
         self.loss = tf.losses.sparse_softmax_cross_entropy(labels=self.labels, logits=self.logits)
 
         self.optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-        self.train_op = self.optimizer.minimize(self.loss, global_step=self.global_step)
+        self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
 
-    def train(self, sess, dataset, buffer_size=1000, *args, **kwargs):
-        if self.mode == self.ModeKeys.TRAIN:
-            sess.run(self.init_op)
+    def train(self, dataset, buffer_size=1000, *args, **kwargs):
+        # if self.mode == self.ModeKeys.TRAIN:
+        #     self.sess.run(self._init_op)  # BUG: it means every it train it will init all the var
+        # else:
+        #     self.mode = self.ModeKeys.RETRAIN
 
         for _ in range(self.config.n_epoch):
             ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
             while True:
                 try:
-                    features, labels = sess.run(ds_iter.get_next())
-                    loss_val, _, acc_val, _ = sess.run([self.loss, self.train_op, self.accuracy, self.update_op],
-                                                       feed_dict={self.features: features, self.labels: labels})
-                    logger.info("Step {}: loss {}, accuracy {}".format(self.global_step.eval(sess), loss_val, acc_val))
+                    features, labels = self.sess.run(ds_iter.get_next())
+                    loss_val, _, acc_val, _ = self.sess.run([self.loss, self.train_op, self.accuracy, self.update_op],
+                                                            feed_dict={self.features: features, self.labels: labels})
+                    logger.info("Step {}: loss {}, accuracy {:.3}".format(self.global_step, loss_val, acc_val))
                 except tf.errors.OutOfRangeError:
                     break
-            self.save(sess)
+            self.save()
 
-    def evaluate(self, sess, dataset, *args, **kwargs):
+    def evaluate(self, dataset, *args, **kwargs):
         self.mode = self.ModeKeys.EVAL
-        ds_iter = dataset.batch(1).make_one_shot_iterator()
+        ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
 
+        acc_ret = dict()
+        i = 1
         while True:
             try:
-                features, labels = sess.run(ds_iter.get_next())
-                accuracy_val, _ = sess.run([self.accuracy, self.update_op], feed_dict={self.features: features,
-                                                                                       self.labels: labels})
-                print(accuracy_val)
+                features, labels = self.sess.run(ds_iter.get_next())
+                prediction, _ = self.sess.run([self.prediction, self.update_op],
+                                              feed_dict={self.features: features, self.labels: labels})
+                logger.debug("labels is {}, prediction is {}".format(labels, prediction))
+                # it's better to run `update_op` first, then run `accuracy`
+                accuracy_val = self.sess.run(self.accuracy)
+                logger.info('Accuracy is {:.3} of {} test samples'.format(accuracy_val, i))
+                acc_ret[i] = accuracy_val
+                i += 1
             except tf.errors.OutOfRangeError:
                 break
 
-    def predict(self, sess, dataset, *args, **kwargs):
-        pass
+        return acc_ret
+
+    def predict(self, dataset, *args, **kwargs):
+        self.mode = self.ModeKeys.PREDICT
+        ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
+
+        pred_ret = []
+        i = 1
+        while True:
+            try:
+                features = self.sess.run(ds_iter.get_next())
+                prediction = self.sess.run(self.prediction, feed_dict={self.features: features})
+                pred_ret.append(prediction)
+                logger.info("the prediction of No.{} is {}".format(i, prediction))
+            except tf.errors.OutOfRangeError:
+                break
+
+        return np.array(pred_ret).flatten()
 
 
 if __name__ == '__main__':
+    # logger.setLevel(logging.DEBUG)
+
     config = Config('ex', [4], 3)
     config.ckpt_dir = "D:/Tmp/log/example_ckpt/"
-    config.n_epoch = 50
+    config.n_epoch = 10
     config.n_feature = [4]
     config.n_units = [10, 10]
     config.n_class = 3
@@ -87,37 +114,24 @@ if __name__ == '__main__':
 
     ds_train = get_dataset('train')
     ds_eval = get_dataset('eval')
+    ds_predict = get_dataset('predict')
 
-    init_op = tf.global_variables_initializer()
+    logger.debug(model.global_step)
 
-    with tf.Session() as sess:
-        model.load(sess)
-        model.train(sess, ds_train)
-        print(sess.run(model.global_step))
-        model.evaluate(sess, ds_eval)
+    model.load()
+
+    logger.debug(model.global_step)
+
+    # model.train(ds_train)
+    acc_ret = model.evaluate(ds_eval)
+    print(acc_ret)
+
+    pred_ret = model.predict(ds_predict)
+    print(pred_ret)
+
 
     print('\n\n\n')
-    # dataset = None
-    #
-    # with tf.Session() as sess:
-    #     assert model.graph == tf.get_default_graph()
-    #     assert sess.graph == tf.get_default_graph()
-    #
-    #     # model.load(sess)  # some error
-    #
-    #     model.train(sess, dataset)
-    #
-    #     for i, obj in enumerate(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)):
-    #         print(i, obj)
-    #
-    #     # f, l = ds_iter.get_next()
-    #     # while True:
-    #     #     try:
-    #     #         ff = sess.run(f)
-    #     #         print(ff)
-    #     #     except tf.errors.OutOfRangeError:
-    #     #         break
-    #
+
     # from tensorflow.python.tools import inspect_checkpoint as chkp
     #
     # latest_ckpt = tf.train.latest_checkpoint(config.ckpt_dir)

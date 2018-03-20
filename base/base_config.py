@@ -13,6 +13,7 @@ class Config(Bunch):
         self.n_feature = n_feature
         self.n_class = n_class
 
+        self.sess_config = None  # ref: `tf.ConfigProto`
         self.n_batch = n_batch
         self.n_step = n_step
         self.n_epoch = n_epoch

@@ -3,13 +3,13 @@ import logging
 import tensorflow as tf
 import pandas as pd
 
-from huaytools.tf_.utils import DataGenerator
-from huaytools.tf_.example.example_model import ExampleModel
-from huaytools.tf_.example.example_trainer import ExampleTrainer
+from utils import DataGenerator
+from example_model import ExampleModel
+from example_trainer import ExampleTrainer
 
 import huaytools as hy
 
-from huaytools.tf_ import BaseConfig, BaseSummary
+from tf_ import BaseConfig, BaseSummary
 
 logging.basicConfig(format='[%(name)s] : %(asctime)s : %(levelname)s : %(message)s',
                     level=logging.INFO)
