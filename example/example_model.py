@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         model.load(sess)
-        # model.train(sess, ds_train)
+        model.train(sess, ds_train)
         print(sess.run(model.global_step))
         model.evaluate(sess, ds_eval)
 
