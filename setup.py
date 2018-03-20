@@ -14,8 +14,9 @@ setup(
     name="tensorflow_template",
     version="0.1",
     keywords=("huay", "tensorflow_template"),
-    description="huay's tensorflow template",
-    long_description="huay's tensorflow template",
+    description="A tensorflow template for quick starting a tf project",
+    long_description="A deep learning template with tensorflow and it will help you "
+                     "to change just the core part of model every time you start a new tensorflow project",
     license="MIT Licence",
 
     url="https://github.com/imhuay/tensorflow_template",

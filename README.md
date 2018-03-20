@@ -1,6 +1,6 @@
 # Tensorflow Template
 
-A deep learning template with tensorflow and it will will help you to change just the core part of model every time you start a new tensorflow project, 
+A deep learning template with tensorflow and it will help you to change just the core part of model every time you start a new tensorflow project, 
 of which the idea is from another project [MrGemy95/Tensorflow-Project-Template](https://github.com/MrGemy95/Tensorflow-Project-Template).
 The proj can work well, but it separates the model, train and summary to 3 parts which makes the process more readable but complex. 
 And it seems to lack the interface of evaluate and predict.
