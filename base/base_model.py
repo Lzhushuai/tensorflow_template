@@ -74,21 +74,25 @@ class BaseModel(object):
 
         Examples:
             ```
-            with self.graph.as_default():
-                net = tf.feature_column.input_layer(features, self.feature_columns)
+            self.features = tf.placeholder(tf.float32, [None] + self.config.n_feature, 'features')
+            self.labels = tf.placeholder(tf.int32, [None], 'labels')
 
-                for units in self.config.n_units:
-                    net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
+            net = self.features  # input_layer
+            for units in self.config.n_units:
+                net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
+                # net = tf.layers.Dense(units=self.config.n_units[0], activation=tf.nn.relu)(net)
 
-                self.logits = tf.layers.dense(net, self.config.n_class, activation=None)
+            self.logits = tf.layers.dense(net, self.config.n_class, activation=None)
+            self.prediction = tf.argmax(self.logits, axis=1)
 
-                self.prediction = tf.argmax(self.logits, axis=1)
+            self.accuracy, self.update_op = tf.metrics.accuracy(labels=self.labels,
+                                                                predictions=self.prediction,
+                                                                name='acc_op')
 
-                if labels is not None:  # train or evaluate
-                    self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=self.logits)
+            self.loss = tf.losses.sparse_softmax_cross_entropy(labels=self.labels, logits=self.logits)
 
-                    optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-                    self.train_op = optimizer.minimize(self.loss, global_step=self._global_step)
+            self.optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
+            self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
             ```
         """
 

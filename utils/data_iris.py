@@ -37,6 +37,7 @@ if __name__ == '__main__':
 
     ds_iter = ds.make_one_shot_iterator()
 
+    # each column is a sample
     data = [[5.1, 5.9, 6.9],
             [3.3, 3.0, 3.1],
             [1.7, 4.2, 5.4],
