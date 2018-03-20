@@ -1,9 +1,6 @@
 import logging
 import tensorflow as tf
 
-from base.base_config import Config
-# from base.base_mode import ModeKeys
-
 logger = logging.getLogger(__name__)
 
 

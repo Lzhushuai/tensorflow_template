@@ -14,7 +14,10 @@ Actually, this proj can not work better than it. It just makes the process more 
 
 The example is about the iris classification question. You can find the data and code at [examples](./examples)
 
-1. Create a model class which inherit the [BaseModel](./base/base_model.py)
+1. Create a model class which inherit the [BaseModel](tensorflow_template/base/base_model.py)
+
+    All you need to do is finish the following four functions.
+    
     ```python
     class IrisModel(BaseModel):
         def _init_graph(self):
@@ -113,7 +116,6 @@ The example is about the iris classification question. You can find the data and
 
         return acc_ret
      
-
     def predict(self, dataset, *args, **kwargs):
         self.mode = self.ModeKeys.PREDICT
         ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
@@ -177,3 +179,5 @@ The example is about the iris classification question. You can find the data and
 I always want to replace the `tf.placeholder` with `tf.data.Dataset` but no idea. 
 You can see my trouble at [stackoverflow](https://stackoverflow.com/questions/49355553/how-to-write-a-template-for-most-tensorflow-deep-learning-project?answertab=votes#tab-top).
 If you have a good resolvent, welcome it.
+
+If you use the template to build some model. Welcome it to the examples.

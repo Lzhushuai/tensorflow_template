@@ -1,14 +1,10 @@
 """
-show how to use `tf.feature_columns`
+About how to use `tf.feature_columns`
 """
-import os
 import logging
 import tensorflow as tf
-import tensorlayer as tl
-import huaytools as hy
 
-from base.base_config import Config
-from base.base_model import BaseModel
+from tensorflow_template.base import BaseModel
 
 logger = logging.getLogger(__name__)
 

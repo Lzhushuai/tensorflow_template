@@ -1,12 +1,8 @@
-import os
 import logging
 import tensorflow as tf
-import tensorlayer as tl
-import huaytools as hy
 
-from base.base_config import Config
-from base.base_model import BaseModel
-from utils.utils import get_uninitialized_variables
+from tensorflow_template import Config
+from tensorflow_template import BaseModel
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='[%(name)s] : %(asctime)s : %(levelname)s : %(message)s',
@@ -104,7 +100,7 @@ if __name__ == '__main__':
 
     model = ExampleModel(config)
 
-    from utils.data_iris import *
+    from tensorflow_template.utils.data_iris import *
 
     ds_train = get_dataset('train')
     ds_eval = get_dataset('eval')
