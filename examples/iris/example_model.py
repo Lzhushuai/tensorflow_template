@@ -60,7 +60,7 @@ class ExampleModel(BaseModel):
                 prediction, _ = self.sess.run([self.prediction, self.update_op],
                                               feed_dict={self.features: features, self.labels: labels})
                 logger.debug("labels is {}, prediction is {}".format(labels, prediction))
-                # it's better to run `update_op` first, then run `accuracy`
+                # run `update_op` first, then run the `accuracy`
                 acc_val = self.sess.run(self.accuracy)
                 logger.info('Accuracy is {:.3} of {} test samples'.format(acc_val, i))
                 acc_ret[i] = acc_val

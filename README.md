@@ -110,15 +110,16 @@ def evaluate(self, dataset, *args, **kwargs):
             prediction, _ = self.sess.run([self.prediction, self.update_op],
                                           feed_dict={self.features: features, self.labels: labels})
             logger.debug("labels is {}, prediction is {}".format(labels, prediction))
-            # it's better to run `update_op` first, then run `accuracy`
+            # run `update_op` first, then run the `accuracy`
             acc_val = self.sess.run(self.accuracy)
             logger.info('Accuracy is {:.3} of {} test samples'.format(acc_val, i))
             acc_ret[i] = acc_val
             i += 1
         except tf.errors.OutOfRangeError:
             break
+
     return acc_ret
- 
+
 def predict(self, dataset, *args, **kwargs):
     self.mode = self.ModeKeys.PREDICT
     ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
@@ -134,6 +135,7 @@ def predict(self, dataset, *args, **kwargs):
             i += 1
         except tf.errors.OutOfRangeError:
             break
+
     return np.array(pred_ret).flatten()
 ```
     
