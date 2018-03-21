@@ -139,7 +139,7 @@ def predict(self, dataset, *args, **kwargs):
     return np.array(pred_ret).flatten()
 ```
     
-### 5. Run it
+### 4. Run it
     
 Here `Config` object is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
     
