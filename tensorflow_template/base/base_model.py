@@ -40,7 +40,6 @@ class BaseModel(object):
             self.graph = graph
 
         self.sess = tf.Session(graph=self.graph, config=self.config.sess_config)
-
         self.mode = self.ModeKeys.TRAIN
 
         self.build_model()
