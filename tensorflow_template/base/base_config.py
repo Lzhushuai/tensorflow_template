@@ -1,3 +1,4 @@
+import os
 from bunch import Bunch
 
 
@@ -18,6 +19,7 @@ class Config(Bunch):
         self.n_epoch = n_epoch
         self.learning_rate = learning_rate
         self.ckpt_dir = ckpt_dir
+        # self.ckpt_path = os.path.join(self.ckpt_dir, self.name)
         self.summary_dir = summary_dir
 
         self.sess_config = None  # ref: `tf.ConfigProto`

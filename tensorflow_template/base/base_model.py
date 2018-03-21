@@ -1,3 +1,4 @@
+import os
 import logging
 import tensorflow as tf
 
@@ -178,15 +179,15 @@ class BaseModel(object):
             ckpt_dir = self.config.ckpt_dir
             assert ckpt_dir is not None, "`ckpt_dir` is None!"
 
-        latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)
-        if latest_ckpt:
-            # sess.run(self._init_op)
-            logger.info("Loading the latest model from checkpoint: {} ...\n".format(latest_ckpt))
-            self.saver.restore(self.sess, latest_ckpt)
-            logger.info("model loaded")
+        logger.debug(ckpt_dir)
+        ckpt = tf.train.get_checkpoint_state(self.config.ckpt_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            logger.info("Loading the latest model from checkpoint {}".format(ckpt.model_checkpoint_path))
+            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            # logger.info("model loaded")
             self.mode = self.ModeKeys.RETRAIN
         else:
-            logger.info("No model checkpoint\n")
+            logger.info("No model checkpoint.")
 
     def save(self, ckpt_dir=None, **kwargs):
         """"""
@@ -194,8 +195,9 @@ class BaseModel(object):
             ckpt_dir = self.config.ckpt_dir
             assert ckpt_dir is not None, "`ckpt_dir` is None!"
 
+        ckpt_prefix = os.path.join(ckpt_dir, self.config.name)
         logger.info("Saving model to {}".format(self.config.ckpt_dir))
-        self.saver.save(self.sess, ckpt_dir, self._global_step, **kwargs)
+        self.saver.save(self.sess, ckpt_prefix, self._global_step, **kwargs)
         # logger.info("Model is saved.")
 
     @property

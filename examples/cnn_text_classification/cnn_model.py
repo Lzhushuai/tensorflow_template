@@ -103,7 +103,7 @@ class CnnText(BaseModel):
         grad_summaries_merged = tf.summary.merge(grad_summaries)
 
         # Output directory for models and summaries
-        logger.info("Writing to {}\n".format(self.config.out_dir))
+        logger.info("Writing to {}\n".format(self.config.log_dir))
 
         # Summaries for loss and accuracy
         loss_summary = tf.summary.scalar("loss", self.loss)
@@ -111,12 +111,12 @@ class CnnText(BaseModel):
 
         # Train Summaries
         self.train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
-        train_summary_dir = os.path.join(self.config.out_dir, "summaries", "train")
+        train_summary_dir = os.path.join(self.config.log_dir, "summaries", "train")
         self.train_summary_writer = tf.summary.FileWriter(train_summary_dir, self.sess.graph)
 
         # Dev summaries
         self.dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
-        dev_summary_dir = os.path.join(self.config.out_dir, "summaries", "dev")
+        dev_summary_dir = os.path.join(self.config.log_dir, "summaries", "dev")
         self.dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, self.sess.graph)
 
     def train(self, dataset, *args, **kwargs):
@@ -150,7 +150,8 @@ class CnnText(BaseModel):
         step, summaries, loss, accuracy = self.sess.run(
             [self._global_step, self.dev_summary_op, self.loss, self.accuracy],
             feed_dict)
-        logger.info("step {},\t loss {:g},\t acc {:g}".format(step, loss, accuracy))
+
+        logger.info("Evaluate step {},\t loss {:g},\t acc {:g}".format(step, loss, accuracy))
         self.dev_summary_writer.add_summary(summaries, step)
 
     def predict(self, dataset, *args, **kwargs):
@@ -159,6 +160,8 @@ class CnnText(BaseModel):
 
 if __name__ == '__main__':
     """"""
+    logger.setLevel(logging.DEBUG)
+
     config = Config('cnn_text')
     config.sess_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
@@ -174,28 +177,30 @@ if __name__ == '__main__':
 
     # Train parameters
     config.n_batch = 256
-    config.n_epoch = 200
+    config.n_epoch = 50
     config.dropout_keep_prob = 0.5
 
     # Other
-    timestamp = str(int(time.time()))
-    config.out_dir = os.path.abspath(os.path.join(os.path.curdir, "log", timestamp))
-    if not os.path.exists(config.out_dir):
-        os.makedirs(config.out_dir)
-    config.ckpt_dir = os.path.abspath(os.path.join(config.out_dir, "checkpoints"))
+    # timestamp = str(int(time.time()))
+    config.log_dir = os.path.abspath(os.path.join(os.path.curdir, "log"))
+    if not os.path.exists(config.log_dir):
+        os.makedirs(config.log_dir)
+    config.ckpt_dir = os.path.abspath(os.path.join(config.log_dir, "checkpoints"))
     config.ckpt_prefix = os.path.join(config.ckpt_dir, "model")
     config.eval_step = 50  # Evaluate model on dev set after this many steps
     config.ckpt_step = 100  # Save model after this many steps
 
     # prepare the data
     x_train, x_test, y_train, y_test, vocab_processor = data_helper.get_dataset()
-    vocab_processor.save(os.path.join(config.out_dir, "vocab"))  # binary file
+    vocab_processor.save(os.path.join(config.log_dir, "vocab"))  # binary file
 
     config.vocab_size = len(vocab_processor.vocabulary_)
     config.sequence_length = x_train.shape[1]
     config.n_class = y_train.shape[1]
 
     model = CnnText(config)
+    model.load(r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\cnn_text_classification\log")
+    logger.debug(model.global_step)
 
     batches = data_helper.batch_iter(
         list(zip(x_train, y_train)), config.n_batch, config.n_epoch)
@@ -205,7 +210,6 @@ if __name__ == '__main__':
         model.train(batch)
         if model.global_step % config.eval_step == 0:
             print()
-            logger.info("Evaluation:")
             model.evaluate((x_test, y_test))
             print()
         if model.global_step % config.ckpt_step == 0:

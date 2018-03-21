@@ -1,3 +1,4 @@
+import os
 import logging
 import tensorflow as tf
 
@@ -92,9 +93,11 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     config = Config('ex', [4], 3)
-    config.ckpt_dir = "D:/Tmp/log/example_ckpt/"
+    config.ckpt_dir = "./log/example_ckpt"
+    if not os.path.exists(config.ckpt_dir):
+        os.makedirs(config.ckpt_dir)
     config.n_batch = 64
-    config.n_epoch = 10
+    config.n_epoch = 100
     config.n_feature = [4]
     config.n_units = [10, 10]
     config.n_class = 3
