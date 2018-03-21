@@ -22,7 +22,7 @@ Actually, this proj can not work better than it. It just makes the process more 
 
 The example is about the iris classification question. You can find the data and code at [examples/iris](./examples/iris)
 
-1. Create a model class which inherit the [BaseModel](tensorflow_template/base/base_model.py)
+### 1. Create a model class which inherit the [BaseModel](tensorflow_template/base/base_model.py)
 
     All you need to do is finish the following four functions.
     
@@ -40,7 +40,7 @@ The example is about the iris classification question. You can find the data and
         def predict(self, dataset, *args, **kwargs):
             pass
     ```
-2. Build the graph
+### 2. Build the graph
     
     The basic part:
     - the `tf.placeholder`
@@ -75,7 +75,7 @@ The example is about the iris classification question. You can find the data and
         self.optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
         self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
     ```
-3. The `train()` logic
+### 3. The `train()` logic
 
     The `dataset` is a [tf.data.Dataset](https://www.tensorflow.org/versions/master/get_started/datasets_quickstart) object.
     
@@ -97,7 +97,7 @@ The example is about the iris classification question. You can find the data and
             self.save()
     ```
 
-4. The `eval()` and `predict()`
+### 4. The `eval()` and `predict()`
 
     Similar to the train
     
@@ -143,7 +143,7 @@ The example is about the iris classification question. You can find the data and
         return np.array(pred_ret).flatten()
     ```
     
-5. Run it
+### 5. Run it
     
     Here `Config` object is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
     
