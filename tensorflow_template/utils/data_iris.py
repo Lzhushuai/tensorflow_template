@@ -15,11 +15,11 @@ def csv_yield(csv_path):
 def get_dataset(mode):
     if mode == 'train':
         return tf.data.Dataset.from_generator(
-            lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\data\iris\iris_training.csv"),
+            lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\iris\data\iris_training.csv"),
             output_types=(tf.float32, tf.int32))
     elif mode == 'eval':
         return tf.data.Dataset.from_generator(
-            lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\data\iris\iris_test.csv"),
+            lambda: csv_yield(r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\iris\data\iris_test.csv"),
             output_types=(tf.float32, tf.int32))
     else:
         data = [[5.1, 5.9, 6.9], [3.3, 3.0, 3.1], [1.7, 4.2, 5.4], [0.5, 1.5, 2.1]]

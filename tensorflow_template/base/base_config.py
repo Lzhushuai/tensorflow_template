@@ -3,8 +3,8 @@ from bunch import Bunch
 
 class Config(Bunch):
     def __init__(self, name,
-                 n_feature: list, n_class: int,
-                 n_batch=64, n_step=100, n_epoch=20, learning_rate=0.001,
+                 n_feature=None, n_class=None,
+                 n_batch=None, n_step=None, n_epoch=None, learning_rate=None,
                  ckpt_dir=None, summary_dir=None,
                  **kwargs):
         super(Config, self).__init__()
@@ -13,7 +13,6 @@ class Config(Bunch):
         self.n_feature = n_feature
         self.n_class = n_class
 
-        self.sess_config = None  # ref: `tf.ConfigProto`
         self.n_batch = n_batch
         self.n_step = n_step
         self.n_epoch = n_epoch
@@ -21,6 +20,7 @@ class Config(Bunch):
         self.ckpt_dir = ckpt_dir
         self.summary_dir = summary_dir
 
+        self.sess_config = None  # ref: `tf.ConfigProto`
         for k, v in kwargs.items():
             self[k] = v
 

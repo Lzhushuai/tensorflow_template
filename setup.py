@@ -13,10 +13,10 @@ from setuptools import setup, find_packages
 setup(
     name="tensorflow_template",
     version="0.1",
-    keywords=("huay", "tensorflow_template"),
-    description="A tensorflow template for quick starting a tf project",
+    keywords=("huay", "tensorflow", "template", "tensorflow template"),
+    description="A tensorflow template for quick starting a deep learning project.",
     long_description="A deep learning template with tensorflow and it will help you "
-                     "to change just the core part of model every time you start a new tensorflow project",
+                     "to change just the core part of model every time you start a new tensorflow project.",
     license="MIT Licence",
 
     url="https://github.com/imhuay/tensorflow_template",

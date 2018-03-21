@@ -194,9 +194,9 @@ class BaseModel(object):
             ckpt_dir = self.config.ckpt_dir
             assert ckpt_dir is not None, "`ckpt_dir` is None!"
 
-        logger.info("Saving model...")
+        logger.info("Saving model to {}".format(self.config.ckpt_dir))
         self.saver.save(self.sess, ckpt_dir, self._global_step, **kwargs)
-        logger.info("Model is saved.")
+        # logger.info("Model is saved.")
 
     @property
     def global_step(self):

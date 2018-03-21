@@ -9,10 +9,18 @@ This proj merges them into a single class and adds more template code.
 The interface of the base class refer to the TF API [tf.estimator.Estimator](https://www.tensorflow.org/versions/master/api_docs/python/tf/estimator/Estimator).
 Actually, this proj can not work better than it. It just makes the process more clarity for you, and you can freely change them.
 
+## Table Of Contents
+
+<!-- TOC -->
+
+- [Quick Start](#Quick Start)
+- [Examples](#Examples)
+
+<!-- /TOC -->
 
 ## Quick Start
 
-The example is about the iris classification question. You can find the data and code at [examples](./examples)
+The example is about the iris classification question. You can find the data and code at [examples/iris](./examples/iris)
 
 1. Create a model class which inherit the [BaseModel](tensorflow_template/base/base_model.py)
 
@@ -137,7 +145,7 @@ The example is about the iris classification question. You can find the data and
     
 5. Run it
     
-    Here `Config` is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
+    Here `Config` object is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
     
     ```python
     if __name__ == '__main__':
@@ -151,8 +159,6 @@ The example is about the iris classification question. You can find the data and
         config.n_class = 3
     
         model = ExampleModel(config)
-    
-        from utils.data_iris import *
     
         ds_train = get_dataset('train')
         ds_eval = get_dataset('eval')
@@ -173,6 +179,15 @@ The example is about the iris classification question. You can find the data and
         pred_ret = model.predict(ds_predict)
         print(pred_ret)
     ```
+    
+## Examples
+
+- iris classification [[code](./examples/iris)]
+  - [TF Tutorials](https://www.tensorflow.org/get_started/get_started_for_beginners)
+- mnist classification (TODO)
+  - [TF Tutorials](https://www.tensorflow.org/tutorials/layers)
+- cnn-text-classification [[code](./examples/cnn_text_classification)]
+  - The original [paper](http://arxiv.org/abs/1408.5882) and [github](https://github.com/yoonkim/CNN_sentence)
     
 ## Contributing
 
