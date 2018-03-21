@@ -13,8 +13,8 @@ Actually, this proj can not work better than it. It just makes the process more 
 
 <!-- TOC -->
 
-- [Quick Start](#Quick Start)
-- [Examples](#Examples)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
 
 <!-- /TOC -->
 
