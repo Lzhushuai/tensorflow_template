@@ -148,14 +148,18 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     config = Config('ex', [4], 3)
-    config.ckpt_dir = "D:/Tmp/log/example_ckpt/"
-    config.n_epoch = 10
+    config.ckpt_dir = "./log/example_ckpt"
+    if not os.path.exists(config.ckpt_dir):
+        os.makedirs(config.ckpt_dir)
+    config.n_batch = 64
+    config.n_epoch = 100
     config.n_feature = [4]
     config.n_units = [10, 10]
     config.n_class = 3
 
     model = ExampleModel(config)
 
+    from examples.iris.data_iris import *
     ds_train = get_dataset('train')
     ds_eval = get_dataset('eval')
     ds_predict = get_dataset('predict')
@@ -163,7 +167,6 @@ if __name__ == '__main__':
     logger.debug(model.global_step)
 
     model.load()
-
     logger.debug(model.global_step)
 
     model.train(ds_train)
