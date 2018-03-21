@@ -75,8 +75,9 @@ def _init_graph(self):
 
     self.optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
     self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
-    ```
-### 3. The `train()` logic
+```
+    
+### 3. The `train()`, `evaluate()` and `predict()`
 
 The `dataset` is a [tf.data.Dataset](https://www.tensorflow.org/versions/master/get_started/datasets_quickstart) object.
 
@@ -96,13 +97,7 @@ def train(self, dataset, buffer_size=1000, *args, **kwargs):
             except tf.errors.OutOfRangeError:
                 break
         self.save()
-```
 
-### 4. The `eval()` and `predict()`
-
-Similar to the train
-
-```python
 def evaluate(self, dataset, *args, **kwargs):
     self.mode = self.ModeKeys.EVAL
     ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
@@ -122,7 +117,6 @@ def evaluate(self, dataset, *args, **kwargs):
             i += 1
         except tf.errors.OutOfRangeError:
             break
-
     return acc_ret
  
 def predict(self, dataset, *args, **kwargs):
@@ -140,7 +134,6 @@ def predict(self, dataset, *args, **kwargs):
             i += 1
         except tf.errors.OutOfRangeError:
             break
-
     return np.array(pred_ret).flatten()
 ```
     
