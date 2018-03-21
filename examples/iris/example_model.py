@@ -93,6 +93,7 @@ if __name__ == '__main__':
 
     config = Config('ex', [4], 3)
     config.ckpt_dir = "D:/Tmp/log/example_ckpt/"
+    config.n_batch = 64
     config.n_epoch = 10
     config.n_feature = [4]
     config.n_units = [10, 10]
@@ -100,7 +101,7 @@ if __name__ == '__main__':
 
     model = ExampleModel(config)
 
-    from tensorflow_template.utils.data_iris import *
+    from examples.iris.data_iris import *
 
     ds_train = get_dataset('train')
     ds_eval = get_dataset('eval')
@@ -109,7 +110,6 @@ if __name__ == '__main__':
     logger.debug(model.global_step)
 
     model.load()
-
     logger.debug(model.global_step)
 
     model.train(ds_train)

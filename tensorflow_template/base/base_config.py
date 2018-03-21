@@ -4,7 +4,7 @@ from bunch import Bunch
 class Config(Bunch):
     def __init__(self, name,
                  n_feature=None, n_class=None,
-                 n_batch=None, n_step=None, n_epoch=None, learning_rate=None,
+                 n_batch=64, n_step=None, n_epoch=None, learning_rate=None,
                  ckpt_dir=None, summary_dir=None,
                  **kwargs):
         super(Config, self).__init__()

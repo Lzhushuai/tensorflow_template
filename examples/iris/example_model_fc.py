@@ -4,7 +4,7 @@ About how to use `tf.feature_columns`
 import logging
 import tensorflow as tf
 
-from tensorflow_template.base import BaseModel
+from tensorflow_template import BaseModel
 
 logger = logging.getLogger(__name__)
 
