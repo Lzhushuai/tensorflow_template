@@ -11,7 +11,7 @@ from tensorflow_template import BaseModel, Config
 from examples.cnn_text_classification import data_helper
 
 logging.basicConfig(format='[%(name)s] : %(asctime)s : %(levelname)s : %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -31,13 +31,18 @@ class CnnText(BaseModel):
         self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
 
         with tf.name_scope('embedding'):
+            # Here use the random weights and adjust it when training.
+            # If the original dataset is small or you want to apply the model to a wide application,
+            # it should use some pre-trained word embedding, such as word2vec, GloVe or FastText.
             self.W = tf.Variable(
                 tf.random_uniform([self.config.vocab_size, self.config.embedding_size], -1.0, 1.0),
                 name="W")
             self.embedded_chars = tf.nn.embedding_lookup(self.W, self.input_x)
             self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
+            # shape (x, y) -> (x, y, 1)
+            # The last dim expanded represent `channel` in the CNN input
 
-        # create cnn for different filter size:
+        # Create cnn for different filter size:
         pooled_outputs = []
         for i, filter_size in enumerate(self.config.filter_sizes):
             with tf.name_scope("cnn-%i" % filter_size):
@@ -65,7 +70,7 @@ class CnnText(BaseModel):
         with tf.name_scope("dropout"):
             self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob)
 
-        # Final (unnormalized) scores and predictions
+        # Final (un-normalized) scores and predictions
         l2_loss = tf.constant(0.0)
         with tf.name_scope("output"):
             W = tf.get_variable("W",
@@ -160,8 +165,6 @@ class CnnText(BaseModel):
 
 if __name__ == '__main__':
     """"""
-    logger.setLevel(logging.DEBUG)
-
     config = Config('cnn_text')
     config.sess_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
@@ -195,8 +198,13 @@ if __name__ == '__main__':
     vocab_processor.save(os.path.join(config.log_dir, "vocab"))  # binary file
 
     config.vocab_size = len(vocab_processor.vocabulary_)
-    config.sequence_length = x_train.shape[1]
-    config.n_class = y_train.shape[1]
+    config.sequence_length = x_train.shape[1]  # 56,
+    """Just the max length of the longest sentence in the dataset.
+        If the length of some sentences is shorter than it, pad 0 at tail
+    """
+    config.n_class = y_train.shape[1]  # 2, pos and neg
+
+    logger.debug("config.sequence_length = %i; config.n_class = %i" % (config.sequence_length, config.n_class))
 
     model = CnnText(config)
     model.load(r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\cnn_text_classification\log")

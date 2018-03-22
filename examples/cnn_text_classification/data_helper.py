@@ -72,12 +72,13 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
 
 
 def get_dataset(test_percentage=0.2):
-    x_text, y = load_data_and_labels("./data/rt-polarity.pos", "./data/rt-polarity.neg")
+    x_, y = load_data_and_labels("./data/rt-polarity.pos", "./data/rt-polarity.neg")
 
     # Build vocabulary
-    max_document_length = max([len(x.split(" ")) for x in x_text])
+    max_document_length = max([len(x.split(" ")) for x in x_])
+    logger.debug("max_document_length = %i" % max_document_length)
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
-    x = np.array(list(vocab_processor.fit_transform(x_text)))
+    x = np.array(list(vocab_processor.fit_transform(x_)))
 
     # Randomly shuffle data
     np.random.seed(10)

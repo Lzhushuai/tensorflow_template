@@ -1,5 +1,5 @@
 """
-About how to use `tf.feature_columns`
+Show how to use `tf.feature_columns`
 """
 import logging
 import tensorflow as tf
