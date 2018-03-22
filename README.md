@@ -56,14 +56,17 @@ others:
     
 ```python
 def _init_graph(self):
+    # 1. define the `tf.placeholder`
     self.features = tf.placeholder(tf.float32, [None] + self.config.n_feature, 'features')
     self.labels = tf.placeholder(tf.int32, [None], 'labels')
 
+    # 2. define the net
     net = self.features  # input_layer
     for units in self.config.n_units:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
         # net = tf.layers.Dense(units=units, activation=tf.nn.relu)(net)
 
+    # the output
     self.logits = tf.layers.dense(net, self.config.n_class, activation=None)
     self.prediction = tf.argmax(self.logits, axis=1)
 
@@ -71,8 +74,10 @@ def _init_graph(self):
                                                         predictions=self.prediction,
                                                         name='acc_op')
 
+    # 3. define the loss
     self.loss = tf.losses.sparse_softmax_cross_entropy(labels=self.labels, logits=self.logits)
 
+    # 4. define the train_op
     self.optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
     self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
 ```
@@ -86,8 +91,10 @@ Of course, the model does not limit to use it. You can choose the style of read 
 ```python
 def train(self, dataset, buffer_size=1000, *args, **kwargs):
     for _ in range(self.config.n_epoch):
+        # define the train epoch
         ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
         while True:
+            # define the train step
             try:
                 features, labels = self.sess.run(ds_iter.get_next())
                 loss_val, _, _ = self.sess.run([self.loss, self.train_op, self.update_op],
