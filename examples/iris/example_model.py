@@ -43,12 +43,14 @@ class ExampleModel(BaseModel):
         for _ in range(self.config.n_epoch):
             # define the train epoch
             ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
+            features, labels = self.sess.run(ds_iter.get_next())
             while True:
                 # define the train step
                 try:
-                    features, labels = self.sess.run(ds_iter.get_next())
+                    # features, labels = self.sess.run(ds_iter.get_next())  # it's quite a error coding
+                    f, l = self.sess.run(features, labels)
                     loss_val, _, _ = self.sess.run([self.loss, self.train_op, self.update_op],
-                                                   feed_dict={self.features: features, self.labels: labels})
+                                                   feed_dict={self.features: f, self.labels: l})
                     acc_val = self.sess.run(self.accuracy)
                     logger.info("Step {}: loss {}, accuracy {:.3}".format(self.global_step, loss_val, acc_val))
                 except tf.errors.OutOfRangeError:
@@ -58,15 +60,16 @@ class ExampleModel(BaseModel):
     def evaluate(self, dataset, *args, **kwargs):
         self.mode = self.ModeKeys.EVAL
         ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
+        features, labels = self.sess.run(ds_iter.get_next())
 
         acc_ret = dict()
         i = 1
         while True:
             try:
-                features, labels = self.sess.run(ds_iter.get_next())
+                f, l = self.sess.run(features, labels)
                 prediction, _ = self.sess.run([self.prediction, self.update_op],
-                                              feed_dict={self.features: features, self.labels: labels})
-                logger.debug("labels is {}, prediction is {}".format(labels, prediction))
+                                              feed_dict={self.features: f, self.labels: l})
+                logger.debug("labels is {}, prediction is {}".format(l, prediction))
                 # run `update_op` first, then run the `accuracy`
                 acc_val = self.sess.run(self.accuracy)
                 logger.info('Accuracy is {:.3} of {} test samples'.format(acc_val, i))

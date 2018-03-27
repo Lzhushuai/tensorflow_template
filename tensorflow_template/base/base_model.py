@@ -2,6 +2,9 @@ import os
 import logging
 import tensorflow as tf
 
+from tensorflow_template.base.base_config import Config
+from tensorflow_template.base.base_summary import Summary
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +36,7 @@ class BaseModel(object):
 
     def __init__(self, config, graph=None):
         self.config = config
+        self.mode = self.ModeKeys.TRAIN
 
         if graph is None:
             self.graph = tf.get_default_graph()
@@ -40,7 +44,9 @@ class BaseModel(object):
             self.graph = graph
 
         self.sess = tf.Session(graph=self.graph, config=self.config.sess_config)
-        self.mode = self.ModeKeys.TRAIN
+
+        if 'summary_dir' in config and config.summary_dir is not None:
+            self.summarizer = Summary(config.summary_dir, self.sess)
 
         self.build_model()
         self.init_global_variables()
@@ -53,9 +59,10 @@ class BaseModel(object):
             self._init_saver()
 
     def init_global_variables(self):
+        # tf.global_variables_initializer().run(session=self.sess)
         init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
         self.sess.run(init_op)
-        logger.debug("Uninitialized_variables are {}".format(self.sess.run(tf.report_uninitialized_variables())))
+        # logger.debug("Uninitialized_variables are {}".format(self.sess.run(tf.report_uninitialized_variables())))
 
     def _init_graph(self):
         """
@@ -128,6 +135,7 @@ class BaseModel(object):
 
     def evaluate(self, dataset, *args, **kwargs):
         """
+        For test or verify, it need not to modify the parameter here.
 
         Args:
             dataset(tf.data.Dataset): need to yield a tuple (features, labels) (same as train)
@@ -136,7 +144,7 @@ class BaseModel(object):
             **kwargs: reserve
 
         Returns:
-            the metrics of
+            the metrics
         """
         raise NotImplementedError
 
@@ -162,8 +170,8 @@ class BaseModel(object):
     def _init_saver(self, *args, **kwargs):
         """
         The saver must be define under the `self.graph` and init at the last of the graph,
-            otherwise it can't find the variables under the graph.
-        Just copy the the examples to the subclass
+            otherwise it can't find all the variables under the graph.
+        Just copy the the example to the subclass
 
         Examples:
             ```

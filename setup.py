@@ -8,6 +8,7 @@ from setuptools import setup, find_packages
 
 install_requires = [
     'bunch',
+    'huaytools'
     # 'tensorflow',  # install it beforehand
 ]
 
