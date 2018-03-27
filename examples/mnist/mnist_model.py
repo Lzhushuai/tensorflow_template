@@ -63,11 +63,13 @@ class MnistModel(BaseModel):
 
         # summary
         self.accuracy, self.update_op = tf.metrics.accuracy(self.labels, self.predictions)
-        self.summarizer.add_scalar("accuracy", self.accuracy)
+        # self.summarizer.add_scalar("accuracy", self.accuracy)
+        tf.summary.scalar("accuracy", self.accuracy)
 
         # Loss
         self.loss = tf.losses.sparse_softmax_cross_entropy(labels=self.labels, logits=self.logits)
-        self.summarizer.add_scalar("loss", self.loss)
+        # self.summarizer.add_scalar("loss", self.loss)
+        tf.summary.scalar("loss", self.loss)
 
         # Train op
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
@@ -76,11 +78,15 @@ class MnistModel(BaseModel):
             global_step=self._global_step)
 
         # Merge Summary
-        self.summary = self.summarizer.merge()
+        # self.summary = self.summarizer.merge()
+        self.summary = tf.summary.merge_all()
 
     def train(self, dataset, *args, **kwargs):
         ds_iter = dataset.shuffle(1000).batch(self.config.n_batch).repeat(self.config.n_epoch).make_one_shot_iterator()
         features, labels = ds_iter.get_next()
+        writer = tf.summary.FileWriter(
+            r"D:\OneDrive\workspace\py\DL\tensorflow_template\examples\mnist\log\summary\train")
+
         while True:
             try:
                 f, l = self.sess.run([features, labels])
@@ -91,6 +97,7 @@ class MnistModel(BaseModel):
                                self.training: True})
                 logger.info("Step {}: loss {}, accuracy {:.3}".format(self.global_step, loss, acc))
                 self.summarizer.write_train(summary, self.global_step)
+                # writer.add_summary(summary, self.global_step)
             except tf.errors.OutOfRangeError:
                 break
 
@@ -204,12 +211,14 @@ def cnn():
 if __name__ == '__main__':
     """"""
     # train_images, train_labels, test_images, test_labels = get_data()
-    ds_train, ds_test = get_dataset()
 
-    config = get_config()
+    # TODO: Some BUG lead to slow
+    # ds_train, ds_test = get_dataset()
+    #
+    # config = get_config()
+    #
+    # model = MnistModel(config=config)
+    #
+    # model.train(ds_train)
 
-    model = MnistModel(config=config)
-
-    model.train(ds_train)
-
-    # cnn()
+    cnn()

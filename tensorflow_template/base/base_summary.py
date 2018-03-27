@@ -17,10 +17,11 @@ class Summary(object):
         """"""
         self.summary_dir = summary_dir
         self.summary_list = []
+        self.sess = sess
 
         train_summary_dir = os.path.join(self.summary_dir, 'train')
         os.makedirs(train_summary_dir, exist_ok=True)
-        self.train_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
+        self.train_writer = tf.summary.FileWriter(train_summary_dir)
 
         eval_summary_dir = os.path.join(self.summary_dir, 'eval')
         os.makedirs(eval_summary_dir, exist_ok=True)
@@ -54,8 +55,14 @@ class Summary(object):
 
         """
         if summary_type == 'train':
+            # train_summary_dir = os.path.join(self.summary_dir, 'train')
+            # os.makedirs(train_summary_dir, exist_ok=True)
+            # train_writer = tf.summary.FileWriter(train_summary_dir)
             self.train_writer.add_summary(summary, global_step)
         else:
+            # eval_summary_dir = os.path.join(self.summary_dir, 'eval')
+            # os.makedirs(eval_summary_dir, exist_ok=True)
+            # eval_writer = tf.summary.FileWriter(eval_summary_dir)
             self.eval_writer.add_summary(summary, global_step)
 
     def write_train(self, summary, global_step=None):
