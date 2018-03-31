@@ -26,7 +26,7 @@ class ModeKeys(object):
         return [self.TRAIN, self.EVALUATE, self.PREDICT]
 
 
-class BasicModel(object):
+class BaseModel(object):
 
     def __init__(self, config
                  # , graph=None

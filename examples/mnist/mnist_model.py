@@ -1,11 +1,11 @@
 import tensorflow as tf
 
-from tensorflow_template.base.base_model import BasicModel, BaseConfig
+from tensorflow_template.base.base_model import BaseModel, BaseConfig
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
 
-class MnistModel(BasicModel):
+class MnistModel(BaseModel):
     def _init_model(self, features, labels, mode):
         # For tf newer, the most important is to know the in/out shape of each layer
         # Input size:  [batch_size, 28, 28, 1]

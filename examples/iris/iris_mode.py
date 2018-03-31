@@ -2,7 +2,7 @@ import logging
 import huaytools as hy
 import tensorflow as tf
 
-from tensorflow_template.base.base_model import BasicModel, BaseConfig
+from tensorflow_template.base.base_model import BaseModel, BaseConfig
 
 # logging.basicConfig(format='[%(name)s] : %(asctime)s : %(levelname)s : %(message)s',
 #                     level=logging.INFO)
@@ -14,7 +14,7 @@ from tensorflow_template.base.base_model import BasicModel, BaseConfig
 # print(tf.logging.get_verbosity())
 
 
-class IrisModel(BasicModel):
+class IrisModel(BaseModel):
     def _init_model(self, features, labels, mode):
 
         # 1. define the net

@@ -190,7 +190,7 @@ if __name__ == '__main__':
 
 - iris classification [[code](./examples/iris)]
   - [TF Tutorials](https://www.tensorflow.org/get_started/get_started_for_beginners)
-- mnist classification (TODO)
+- mnist classification [[code](./examples/mnist)] (just train part)
   - [TF Tutorials](https://www.tensorflow.org/tutorials/layers)
 - cnn-text-classification [[code](./examples/cnn_text_classification)]
   - The original [paper](http://arxiv.org/abs/1408.5882) and [github](https://github.com/yoonkim/CNN_sentence)
