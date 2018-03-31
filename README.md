@@ -127,7 +127,7 @@ def get_config():
 if __name__ == '__main__':
 
     config = get_config()
-    ds_train, ds_eval, ds_pred = get_dataset()
+    ds_train, ds_eval, ds_pred = get_datasets()
     
     model = IrisModel(config)
     
