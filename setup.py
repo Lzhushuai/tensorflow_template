@@ -14,7 +14,7 @@ install_requires = [
 
 setup(
     name="tensorflow_template",
-    version="0.2",
+    version="1.0",
     keywords=("huay", "tensorflow", "template", "tensorflow template"),
     description="A tensorflow template for quick starting a deep learning project.",
     long_description="A deep learning template with tensorflow and it will help you "

@@ -2,4 +2,7 @@
 .idea
 dist
 log
+log_*
+out
+out_*
 .egg-info

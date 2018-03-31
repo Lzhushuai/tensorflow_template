@@ -1,268 +1,445 @@
 import os
 import logging
 import tensorflow as tf
+import huaytools as hy
 
-from tensorflow_template.base.base_config import Config
-from tensorflow_template.base.base_summary import Summary
-
-logger = logging.getLogger(__name__)
+from tensorflow_template.base.base_config import BaseConfig
 
 
-class BaseModel(object):
+class ModeKeys(object):
     """
-    Attributes:
-        config(Config): The bunch config of model.
-        graph(tf.Graph): The graph of model, default to use the `tf.get_default_graph()`.
-        mode(ModeKeys): Default is `ModeKeys.TRAIN`. Other mode are `EVAL`, `PREDICT` and `RETRAIN`
-            `RETRAIN` means load from a checkpoint, then it need not to run the `self.init_op` again.
-            Actually, this attr has no use at this version.
+    Standard names for model modes.
+
+        * `TRAIN`: training mode.
+        * `EVALUATE`: evaluation mode.
+        * `PREDICT`: inference mode.
+        ref: https://www.tensorflow.org/versions/master/api_docs/python/tf/estimator/ModeKeys
     """
-    class ModeKeys(object):
-        """
-        Standard names for model modes.
 
-            * `TRAIN`: training mode.
-            * `EVAL`: evaluation mode.
-            * `PREDICT`: inference mode.
-            * `RETRAIN`: retrain mode(new added).
-
-            ref: https://www.tensorflow.org/versions/master/api_docs/python/tf/estimator/ModeKeys
-        """
-
-        TRAIN = 'train'
-        EVAL = 'eval/test/validate'
-        PREDICT = 'infer/predict'
-        RETRAIN = 'retrain'
-
-    def __init__(self, config, graph=None):
-        self.config = config
-        self.mode = self.ModeKeys.TRAIN
-
-        if graph is None:
-            self.graph = tf.get_default_graph()
-        else:
-            self.graph = graph
-
-        self.sess = tf.Session(graph=self.graph, config=self.config.sess_config)
-
-        if 'summary_dir' in config and config.summary_dir is not None:
-            self.summarizer = Summary(config.summary_dir, self.sess)
-
-        self.build_model()
-        self.init_global_variables()
-
-    def build_model(self):
-        """All the variable you want to save should be under the `self.graph`."""
-        with self.graph.as_default():
-            self._init_global_step()
-            self._init_graph()
-            self._init_saver()
-
-    def init_global_variables(self):
-        # tf.global_variables_initializer().run(session=self.sess)
-        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-        self.sess.run(init_op)
-        # logger.debug("Uninitialized_variables are {}".format(self.sess.run(tf.report_uninitialized_variables())))
-
-    def _init_graph(self):
-        """
-        The basic part:
-            0. the `tf.placeholder`
-            1. the net
-            2. the output (self.logits & self.prediction)
-            3. the loss (self.loss)
-            4. the train_op (self.train_op)
-        other:
-            the metrics(such as `tf.metrics.accuracy`)
-            the summary(ref `tf.summary.FileWriter`)
-
-        Examples:
-            ```
-            self.features = tf.placeholder(tf.float32, [None] + self.config.n_feature, 'features')
-            self.labels = tf.placeholder(tf.int32, [None], 'labels')
-
-            net = self.features  # input_layer
-            for units in self.config.n_units:
-                net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
-                # net = tf.layers.Dense(units=self.config.n_units[0], activation=tf.nn.relu)(net)
-
-            self.logits = tf.layers.dense(net, self.config.n_class, activation=None)
-            self.prediction = tf.argmax(self.logits, axis=1)
-
-            self.accuracy, self.update_op = tf.metrics.accuracy(labels=self.labels,
-                                                                predictions=self.prediction,
-                                                                name='acc_op')
-
-            self.loss = tf.losses.sparse_softmax_cross_entropy(labels=self.labels, logits=self.logits)
-
-            self.optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-            self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
-            ```
-        """
-
-        raise NotImplementedError
-
-    def train(self, dataset, *args, **kwargs):
-        """
-        Examples:
-            ```
-            if self.mode == self.ModeKeys.TRAIN:
-                sess.run(self.init_op)
-
-            for _ in range(self.config.n_epoch):
-                ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
-                while True:
-                    try:
-                        features, labels = sess.run(ds_iter.get_next())
-                        loss_val, _ = sess.run([self.loss, self.train_op], feed_dict={self.features: features,
-                                                                                      self.labels: labels})
-                        logger.info("The loss of Step {} is {}".format(self.global_step, loss_val))
-                    except tf.errors.OutOfRangeError:
-                        break
-                self.save(sess)
-            ```
-
-        Args:
-            dataset(tf.data.Dataset): need to yield a tuple (features, labels)
-                `features, labels = ds_iter.get_next()`
-            *args: reserve
-            **kwargs: reserve
-
-        Returns:
-
-        """
-        raise NotImplementedError
-
-    def evaluate(self, dataset, *args, **kwargs):
-        """
-        For test or verify, it need not to modify the parameter here.
-
-        Args:
-            dataset(tf.data.Dataset): need to yield a tuple (features, labels) (same as train)
-                `features, labels = ds_iter.get_next()`
-            *args: reserve
-            **kwargs: reserve
-
-        Returns:
-            the metrics
-        """
-        raise NotImplementedError
-
-    def predict(self, dataset, *args, **kwargs):
-        """
-
-        Args:
-            dataset(tf.data.Dataset): need to yield only the features
-                `features = ds_iter.get_next()`
-            *args: reserve
-            **kwargs: reserve
-
-        Returns:
-            the result of predict
-
-        """
-        raise NotImplementedError
-
-    def _init_global_step(self, name='global_step', **kwargs):
-        """"""
-        self._global_step = tf.Variable(0, trainable=False, name=name, **kwargs)
-
-    def _init_saver(self, *args, **kwargs):
-        """
-        The saver must be define under the `self.graph` and init at the last of the graph,
-            otherwise it can't find all the variables under the graph.
-        Just copy the the example to the subclass
-
-        Examples:
-            ```
-            self.saver = tf.train.Saver(*args, **kwargs)
-            ```
-        """
-        self.saver = tf.train.Saver(*args, **kwargs)
-
-    def load(self, ckpt_dir=None):
-        """"""
-        if ckpt_dir is None:
-            ckpt_dir = self.config.ckpt_dir
-            assert ckpt_dir is not None, "`ckpt_dir` is None!"
-
-        logger.debug(ckpt_dir)
-        ckpt = tf.train.get_checkpoint_state(self.config.ckpt_dir)
-        if ckpt and ckpt.model_checkpoint_path:
-            logger.info("Loading the latest model from checkpoint {}".format(ckpt.model_checkpoint_path))
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
-            # logger.info("model loaded")
-            self.mode = self.ModeKeys.RETRAIN
-        else:
-            logger.info("No model checkpoint.")
-
-    def save(self, ckpt_dir=None, **kwargs):
-        """"""
-        if ckpt_dir is None:
-            ckpt_dir = self.config.ckpt_dir
-            assert ckpt_dir is not None, "`ckpt_dir` is None!"
-
-        ckpt_prefix = os.path.join(ckpt_dir, self.config.name)
-        logger.info("Saving model to {}".format(self.config.ckpt_dir))
-        self.saver.save(self.sess, ckpt_prefix, self._global_step, **kwargs)
-        # logger.info("Model is saved.")
+    TRAIN = 'train'
+    EVALUATE = 'evaluate/test/validate'
+    PREDICT = 'infer/predict'
 
     @property
-    def global_step(self):
-        return self._global_step.eval(self.sess)
+    def keys(self):
+        return [self.TRAIN, self.EVALUATE, self.PREDICT]
 
 
-if __name__ == '__main__':
-    class A:
-        def fun(self):
-            print("A")
+class BasicModel(object):
 
-        def bar(self):
-            self.fun()
+    def __init__(self, config
+                 # , graph=None
+                 ):
+        """
+        Args:
+            config(BaseConfig):
+        """
+        self._config = config
+        self.ModeKeys = ModeKeys
 
-    class B(A):
-        def fun(self):
-            print("B")
+        self._loss = None
+        self._train_op = None
+        self._summary_op = None
 
-    b = B()
-    b.bar()
+        self._hooks = None
+        self._chief_only_hooks = None
 
+        self._ops_to_run = None
 
+        self._log_tensors = dict()
 
+        # if graph is None:
+        #     self._graph = tf.Graph()
+        # else:
+        #     self._graph = graph
 
+        # self._saver = None
+        # self._global_step = None
+        # self._accuracy = None
 
+        # self._metric_ops = dict()
+        # self._predict_ops = []
+        # self._evaluate_ops = []
 
+        # self.features_ph = None
+        # self.labels_ph = None
 
+        # self._global_step = tf.train.create_global_step(self.graph)
 
+        # logger.debug(self.graph.get_collection(tf.GraphKeys.GLOBAL_STEP))
+        # logging.debug(self.graph.get_collection(tf.GraphKeys.GLOBAL_STEP))
 
+        # with self.graph.as_default():
+        #     self._global_step = tf.Variable(0, trainable=False, name='global_step')
+        #     self._init_placeholder()
+        #     self._init_model(self.features_ph, self.labels_ph)
+        #     self._saver = tf.train.Saver()
 
+    def _init_model(self, features, labels, mode):
+        """
+        Define the whole model.
+        The Basic part you have to do:
+            1.
 
+        """
+        raise NotImplementedError
 
+    def _init_hooks(self, mode):
+        """
+        If you want to add some hooks when evaluate, override this function.
 
+        Todo(huay): more easy to add hooks without override this function.
+        """
+        self._hooks = []
 
+        if mode == self.ModeKeys.TRAIN:
+            self._hooks += [tf.train.NanTensorHook(self._loss)]
+            self._hooks += [tf.train.LoggingTensorHook(self._log_tensors,
+                                                       every_n_iter=self.config.log_n_steps_train,
+                                                       every_n_secs=self.config.log_n_secs_train)]
 
+            self._chief_only_hooks = []  # only for `MonitoredTrainingSession`
+            # Actually, there's also a default `CheckpointSaverHook` inside the `MonitoredTrainingSession`
+            # but it can't defined the arg `save_steps`, so use a outside `CheckpointSaverHook` instead
+            self._chief_only_hooks += [tf.train.CheckpointSaverHook(self.config.ckpt_dir,
+                                                                    save_secs=self.config.save_ckpt_secs,
+                                                                    save_steps=self.config.save_ckpt_steps,
+                                                                    scaffold=self.config.mon_sess_config_train[
+                                                                        'scaffold'])]
 
+            # These hooks have defined inside the `tf.train.MonitoredTrainingSession`
+            # self._hooks += [tf.train.StepCounterHook(output_dir=self.config.summary_dir,
+            #                                          every_n_steps=self.config.every_n_steps),
+            #                 tf.train.SummarySaverHook(  # summary_op=self._summary_op,
+            #                     scaffold=self.config.train_scaffold,
+            #                     save_secs=self.config.summary_save_secs,
+            #                     save_steps=self.config.summary_save_steps,
+            #                     output_dir=self.config.summary_dir)]
 
+            if self.config.max_steps is not None:
+                self._hooks += [tf.train.StopAtStepHook(last_step=self.config.max_steps)]
 
+        if mode == self.ModeKeys.EVALUATE:
+            self._hooks += [tf.train.LoggingTensorHook(self._log_tensors,
+                                                       every_n_iter=self.config.log_n_steps_eval,
+                                                       every_n_secs=self.config.log_n_secs_eval)]
+            if self._summary_op is not None:
+                self._hooks += [tf.train.SummarySaverHook(summary_op=self._summary_op,
+                                                          save_secs=self.config.save_sum_secs_eval,
+                                                          save_steps=self.config.save_sum_steps_eval,
+                                                          output_dir=self.config.eval_dir)]
 
+    def train(self, dataset):
+        """
+        Generally, you need not to override this function.
 
+        Args:
+            dataset(tf.data.Dataset):
+        """
+        assert self.config.ckpt_dir is not None, "There's no ckpt_dir."
+        mode = self.ModeKeys.TRAIN
 
+        with tf.Graph().as_default() as g:
+            global_step_tensor = tf.train.create_global_step(g)
+            self._log_tensors['step'] = global_step_tensor
 
+            features, labels = self._load_dataset(dataset, mode)
+            self.ops_to_run = self._init_model(features, labels, mode)
 
+            # self._summary_op = tf.summary.merge_all()  # done inside the `MonitoredTrainingSession`
 
+            tf.add_to_collection(tf.GraphKeys.LOSSES, self._loss)  # no use
 
+            # Init the hooks; some hooks have to define after the model
+            # self._init_train_hooks()
+            self._init_hooks(mode)
 
+            self._access_ops({'loss': self._loss, 'train_op': self._train_op})
+            with tf.train.MonitoredTrainingSession(hooks=self._hooks, chief_only_hooks=self._chief_only_hooks,
+                                                   **self.config.mon_sess_config_train) as sess:
+                while not sess.should_stop():
+                    sess.run(self.ops_to_run)
 
+    def evaluate(self, dataset):
+        """"""
+        mode = self.ModeKeys.EVALUATE
 
+        latest_ckpt = tf.train.latest_checkpoint(self.config.ckpt_dir)
+        assert latest_ckpt is not None, "There is no trained model in {}".format(self.config.ckpt_dir)
 
+        with tf.Graph().as_default() as g:
+            global_step_tensor = tf.train.create_global_step(g)
 
+            # tf.logging.info('Evaluate the model (global_step = {})'.format(self.get_global_step()))
+            # self._log_tensors['step'] = tf.constant(self.get_global_step())
+            self._log_tensors['step'] = global_step_tensor
 
+            features, labels = self._load_dataset(dataset, mode)
+            self.ops_to_run = self._init_model(features, labels, mode)
 
+            # `MonitoredSession` have no `SummarySaverHook` inside, so you have to merge all the summary manual.
+            self._summary_op = tf.summary.merge_all()
 
+            # self._init_evaluate_hooks()
+            self._init_hooks(mode)
 
+            # Note: the scaffolds of train and evaluate must be different.
+            with tf.train.MonitoredSession(hooks=self._hooks,
+                                           session_creator=tf.train.ChiefSessionCreator(
+                                               checkpoint_filename_with_path=latest_ckpt,
+                                               **self.config.mon_sess_config_eval)) as sess:
+                while not sess.should_stop():
+                    sess.run(self.ops_to_run)
+                    # tf.logging.info("loss = {}, acc = {}".format(loss, acc))
 
+    def predict(self, dataset):
+        """"""
+        mode = self.ModeKeys.PREDICT
 
+        latest_ckpt = tf.train.latest_checkpoint(self.config.ckpt_dir)
+        assert latest_ckpt is not None, "There is no trained model in {}".format(self.config.ckpt_dir)
 
+        with tf.Graph().as_default() as g:
+            global_step_tensor = tf.train.create_global_step(g)
+            self._log_tensors['step'] = global_step_tensor
 
+            # labels is None
+            features, labels = self._load_dataset(dataset, mode)
+            self.ops_to_run = self._init_model(features, labels, mode)
 
+            self._init_hooks(mode)
 
+            with tf.train.MonitoredSession(hooks=self._hooks,
+                                           session_creator=tf.train.ChiefSessionCreator(
+                                               checkpoint_filename_with_path=latest_ckpt,
+                                               **self.config.mon_sess_config_pred)) as sess:
+                while not sess.should_stop():
+                    pred_ret = sess.run(self.ops_to_run)
+                    if isinstance(self.ops_to_run, dict):
+                        for i in range(self.config.pred_n_batch):
+                            yield {k: v[i] for k, v in pred_ret.items()}
+                    elif isinstance(self.ops_to_run, list):
+                        for i in range(self.config.pred_n_batch):
+                            yield pred_ret[i]
+                    else:
+                        for one_ret in pred_ret:
+                            yield one_ret
+
+    def add_log_tensor(self, key, tensor, add_to_summary=True, summary_op=tf.summary.scalar, **kwargs):
+        """
+        Add tensor to the log info.
+        The tensor will also be added to summary for Tensorboard if `add_to_summary` is True(default).
+
+        Examples:
+            before add `loss` and `accuracy`
+                INFO:tensorflow:step = 9376 (0.090 sec)
+            add_log_tensor('loss', self_loss)
+            add_log_tensor('acc', self._accuracy)
+                INFO:tensorflow:step = 231, loss = 0.101266466, acc = 0.968 (0.300 sec)
+
+        Args:
+            key(str):
+            tensor(tf.Tensor):
+            add_to_summary(bool): If true, the tensor will also be add to summary
+            summary_op: can be `tf.summary.scalar` or `tf.summary.histogram`
+            kwargs: the rest args for summary_ops
+
+        """
+        # assert summary_op in [tf.summary.scalar, tf.summary.histogram], (
+        #     "summary_op should be one of [tf.summary.scalar, tf.summary.histogram]")
+
+        self._log_tensors[key] = tensor
+        if add_to_summary:
+            summary_op(key, tensor, **kwargs)
+
+    def add_log_tensors(self, tensors_dict):
+        """
+        Add tensors to the log info.
+        These tensors will also be added to summary with summary_op `tf.summary.scalar` for Tensorboard.
+        If you don't want to add some of them to summary or want to use other summary_op, use `add_log_tensor` instead.
+        """
+        for key, tensor in tensors_dict.items():
+            self.add_log_tensor(key, tensor)
+
+    def get_global_step(self):
+        """
+        Get global_step from ckpt
+
+        Returns:
+            numpy.int32 or numpy.int64
+        """
+        try:
+            ckpt_reader = tf.train.NewCheckpointReader(
+                tf.train.latest_checkpoint(self.config.ckpt_dir))
+            return ckpt_reader.get_tensor(tf.GraphKeys.GLOBAL_STEP)
+        except tf.errors.UnknownError:
+            return 0
+
+    def _load_dataset(self, dataset, mode):
+        """
+        Apply the config to the dataset, and generate the dataset iterator.
+        Both for the train/eval and predict(no labels)
+
+        Notes:
+            The graph of dataset iterator must be same as the model.
+
+        Args:
+            dataset(tf.data.Dataset):
+        """
+        if mode == self.ModeKeys.TRAIN:  # use `shuffle`
+            dataset = dataset.shuffle(self.config.buffer_size).batch(self.config.n_batch).repeat(self.config.n_epoch)
+        elif mode == self.ModeKeys.EVALUATE:  # n_epoch is smaller
+            dataset = dataset.batch(self.config.eval_n_batch).repeat(self.config.eval_n_epoch)
+        elif mode == self.ModeKeys.PREDICT:  # n_epoch is 1
+            dataset = dataset.batch(self.config.pred_n_batch).repeat(self.config.pred_n_epoch)
+
+        ds_iter = dataset.make_one_shot_iterator()
+
+        if mode == self.ModeKeys.PREDICT:  # No labels
+            features = ds_iter.get_next()
+            return features, None
+        else:
+            features, labels = ds_iter.get_next()
+            return features, labels
+
+    @staticmethod
+    def _access_ops(ops_dict):
+        """
+        Access all the ops in ops_dict have been defined.
+
+        Examples:
+            self._access_ops({'loss': self._loss, 'train_op': self._train_op})
+        """
+        for op_name, op in ops_dict.items():
+            assert op is not None, "Not define the `{}`".format(op_name)
+        # assert self._loss is not None, "Not define the `loss`"
+        # assert self._train_op is not None, "Not define the `train_op`"
+
+    @property
+    def config(self):
+        """"""
+        return self._config
+
+    @property
+    def ops_to_run(self):
+        return self._ops_to_run
+
+    @ops_to_run.setter
+    def ops_to_run(self, value):
+        self._ops_to_run = value
+
+    # @property
+    # def saver(self):
+    #     """"""
+    #     if self._saver is None:
+    #         self._saver = tf.train.Saver()
+    #     return self._saver
+
+    # @property
+    # def global_step(self):
+    #     """"""
+    #     return self._global_step
+
+    # @property
+    # def graph(self):
+    #     """"""
+    #     return self._graph
+
+    # def add_metric_ops(self, key, metric_op):
+    #     """"""
+    #     self._metric_ops[key] = metric_op
+
+    # def _extract_metric_update_ops(self):
+    #     """"""
+
+    # def save(self, sess, ckpt_dir=None, **kwargs):
+    #     """
+    #     It is useless when using the MonitoredSession, it can save variables automatically.
+    #     """
+    #     if ckpt_dir is None:
+    #         ckpt_dir = self.config.ckpt_dir
+    #         assert ckpt_dir is not None, "`ckpt_dir` is None!"
+    #
+    #     ckpt_prefix = os.path.join(ckpt_dir, self.config.name)
+    #     tf.logging.info("Saving model to {}".format(self.config.ckpt_dir))
+    #
+    #     self._saver.save(sess, ckpt_prefix, tf.train.get_global_step(), **kwargs)
+    #     # logger.info("Model is saved.")
+    #
+    # def load(self, sess, ckpt_dir=None):
+    #     """
+    #     It is useless when using the MonitoredSession, it can load variables automatically.
+    #     """
+    #     if ckpt_dir is None:
+    #         ckpt_dir = self.config.ckpt_dir
+    #         assert ckpt_dir is not None, "`ckpt_dir` is None!"
+    #
+    #     ckpt = tf.train.get_checkpoint_state(self.config.ckpt_dir)
+    #
+    #     if ckpt and ckpt.model_checkpoint_path:
+    #         tf.logging.info("Loading the latest model from checkpoint {}".format(ckpt.model_checkpoint_path))
+    #         self._saver.restore(sess, ckpt.model_checkpoint_path)
+    #     else:
+    #         tf.logging.info("No model checkpoint.")
+    #         pass
+
+    # def _init_placeholder(self):
+    #     """
+    #     Actually, this template mostly uses the `tf.data.Dataset` to pass the input to the graph
+    #     The aim to define these placeholder is to init whole graph when create a instance,
+    #     then you will not wait the dataset to init the graph.
+    #     """
+    #     # raise NotImplementedError
+
+    # def _init_train_hooks(self):
+    #     """
+    #     If the hook which you want to add depends on some op from the model, you have to override this function;
+    #     Otherwise, you can just add the hook to self._hooks directly by `self._hooks.append(hook)` or
+    #     `self._hooks += [some hooks]`
+    #     """
+    #     self._hooks = []
+    #     self._hooks += [tf.train.NanTensorHook(self._loss),
+    #                     tf.train.LoggingTensorHook(self._log_tensors,
+    #                                                every_n_iter=self.config.every_n_steps)]
+    #     if self.config.max_steps is not None:
+    #         self._hooks += [tf.train.StopAtStepHook(last_step=self.config.max_steps)]
+    #
+    #     self._chief_hooks = []
+    #     # the priority of ckpt_dir of `MonitoredTrainingSession` is higher than `CheckpointSaverHook`
+    #     self._chief_hooks += [tf.train.CheckpointSaverHook(self.config.ckpt_dir,
+    #                                                        save_secs=self.config.save_secs,
+    #                                                        save_steps=self.config.save_steps,
+    #                                                        scaffold=self.config.train_scaffold)]
+    #     # There has a `tf.train.SummarySaverHook` inside the MonitoredTrainingSession
+    #     # if self._summary_op is not None:
+    #     #     self._hooks += [tf.train.SummarySaverHook(summary_op=self._summary_op,
+    #     #                                               save_secs=self.config.summary_save_secs,
+    #     #                                               save_steps=self.config.summary_save_steps,
+    #     #                                               output_dir=self.config.summary_dir)]
+
+    # def _init_evaluate_hooks(self):
+    #     """
+    #     If you want to add some hooks when evaluate, override this function;
+    #     """
+    #     self._hooks = []
+    #     self._hooks += [tf.train.LoggingTensorHook(self._log_tensors,
+    #                                                every_n_iter=self.config.every_n_steps)]
+    #     if self._summary_op is not None:
+    #         self._hooks += [tf.train.SummarySaverHook(summary_op=self._summary_op,
+    #                                                   save_secs=self.config.summary_save_secs,
+    #                                                   save_steps=self.config.summary_save_steps,
+    #                                                   output_dir=self.config.eval_dir)]
+
+    # def _train_model(self, sess, features, labels):
+    #     """
+    #     The logic of train.
+    #     """
+    #     raise NotImplementedError
+
+    # def _assert_mode(self, func):
+    #
+    #     def _func(*args, **kwargs):
+    #         assert kwargs['mode'] in self.ModeKeys.keys, "mode must one of the {}".format(self.ModeKeys.keys)
+    #         return func(*args, **kwargs)
+    #
+    #     return _func
