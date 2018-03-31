@@ -107,6 +107,8 @@ They are just the boresome parameters of different kinds of the APIs from tensor
 
 You can easily modify the predefine args or add new args with the Config class.
 
+Here `Config` object is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
+
 ```python
 from tensorflow_template.base.base_model import BaseConfig
 
@@ -120,8 +122,6 @@ def get_config():
 ```
     
 ### 4. Run it
-    
-Here `Config` object is a subclass of Bunch object. If you want to use it, just `pip install bunch`.
     
 ```python
 if __name__ == '__main__':
