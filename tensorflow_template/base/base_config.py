@@ -5,21 +5,21 @@ from bunch import Bunch
 
 
 class BaseConfig(Bunch):
-    """
-    Examples:
-        >>> config = BaseConfig('', n_batch=11, aaa="AAA")
-        >>> config.ttt = 'TTT'
-        >>> print(config.n_batch)
-        11
-        >>> print(config.aaa)
-        AAA
-        >>> print(config.ttt)
-        TTT
-        >>> print(config['ttt'])
-        TTT
-    """
 
     def __init__(self, name='', **kwargs):
+        """
+        Examples:
+            >>> config = BaseConfig('', n_batch=11, aaa="AAA")
+            >>> config.ttt = 'TTT'
+            >>> print(config.n_batch_train)
+            11
+            >>> print(config.aaa)
+            AAA
+            >>> print(config.ttt)
+            TTT
+            >>> print(config['ttt'])
+            TTT
+        """
         super(BaseConfig, self).__init__()
 
         self.name = name
@@ -36,12 +36,12 @@ class BaseConfig(Bunch):
 
         # config for `tf.data.Dataset`
         self.buffer_size = 1000  # dataset.shuffle(buffer_size)
-        self.n_batch = 64  # for train
-        self.n_epoch = 30  # for train
-        self.eval_n_epoch = 3
-        self.eval_n_batch = 10
-        self.pred_n_epoch = 1
-        self.pred_n_batch = 10
+        self.n_batch_train = 64  # for train
+        self.n_epoch_train = 30  # for train
+        self.n_epoch_eval = 1
+        self.n_batch_eval = 10
+        self.n_epoch_pred = 1
+        self.n_batch_pred = 10
 
         self.n_step = None  # `n_batch` and `n_epoch` decide the value of `n_step`
         self.max_steps = None  # If defined, it will add a `tf.train.StopAtStepHook`

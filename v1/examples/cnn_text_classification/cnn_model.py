@@ -108,7 +108,7 @@ class CnnText(BaseModel):
         grad_summaries_merged = tf.summary.merge(grad_summaries)
 
         # Output directory for models and summaries
-        logger.info("Writing to {}\n".format(self.config.log_dir))
+        logger.info("Writing to {}\n".format(self.config.summary_dir))
 
         # Summaries for loss and accuracy
         loss_summary = tf.summary.scalar("loss", self.loss)
@@ -116,12 +116,12 @@ class CnnText(BaseModel):
 
         # Train Summaries
         self.train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
-        train_summary_dir = os.path.join(self.config.log_dir, "summaries", "train")
+        train_summary_dir = os.path.join(self.config.summary_dir, "train")
         self.train_summary_writer = tf.summary.FileWriter(train_summary_dir, self.sess.graph)
 
         # Dev summaries
         self.dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
-        dev_summary_dir = os.path.join(self.config.log_dir, "summaries", "dev")
+        dev_summary_dir = os.path.join(self.config.summary_dir, "dev")
         self.dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, self.sess.graph)
 
     def train(self, dataset, *args, **kwargs):
@@ -185,17 +185,17 @@ if __name__ == '__main__':
 
     # Other
     # timestamp = str(int(time.time()))
-    config.log_dir = os.path.abspath(os.path.join(os.path.curdir, "log"))
-    if not os.path.exists(config.log_dir):
-        os.makedirs(config.log_dir)
-    config.ckpt_dir = os.path.abspath(os.path.join(config.log_dir, "checkpoints"))
-    config.ckpt_prefix = os.path.join(config.ckpt_dir, "model")
+    # config.log_dir = os.path.abspath(os.path.join(os.path.curdir, "log"))
+    # if not os.path.exists(config.log_dir):
+    #     os.makedirs(config.log_dir)
+    # config.ckpt_dir = os.path.abspath(os.path.join(config.log_dir, "checkpoints"))
+    # config.ckpt_prefix = os.path.join(config.ckpt_dir, "model")
     config.eval_step = 50  # Evaluate model on dev set after this many steps
-    config.ckpt_step = 100  # Save model after this many steps
+    config.ckpt_step = 10  # Save model after this many steps
 
     # prepare the data
     x_train, x_test, y_train, y_test, vocab_processor = data_helper.get_dataset()
-    vocab_processor.save(os.path.join(config.log_dir, "vocab"))  # binary file
+    vocab_processor.save(os.path.join(config.out_dir, "vocab"))  # binary file
 
     config.vocab_size = len(vocab_processor.vocabulary_)
     config.sequence_length = x_train.shape[1]  # 56,

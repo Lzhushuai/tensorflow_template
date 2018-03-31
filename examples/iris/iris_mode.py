@@ -6,7 +6,7 @@ from tensorflow_template.base.base_model import BasicModel, BaseConfig
 
 # logging.basicConfig(format='[%(name)s] : %(asctime)s : %(levelname)s : %(message)s',
 #                     level=logging.INFO)
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 # hy.set_logging_basic_config(level=logging.DEBUG)
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -69,7 +69,7 @@ def get_config():
     # config.pred_n_epoch = 2
     # config.pred_n_batch = 3
 
-    # config.max_steps = 500
+    config.max_steps = 500
 
     return config
 
@@ -80,13 +80,12 @@ if __name__ == '__main__':
 
     model = IrisModel(config)
 
-    from example.iris.data_helper import get_dataset
+    from examples.iris.data_helper import get_dataset
 
     ds_train = get_dataset('train')  # ((4,), ())
     ds_eval = get_dataset('eval')  # ((4,), ())
     # ds_predict, expected_y = get_dataset('predict')  # (4,)
-    ds_predict = get_dataset('eval', features_only=True)
-    # print(len(ds_predict.output_shapes))
+    ds_predict = get_dataset('eval', features_only=True)  # (4,)
 
     model.train(ds_train)
 

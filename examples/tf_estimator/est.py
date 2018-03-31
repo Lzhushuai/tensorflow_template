@@ -28,7 +28,7 @@ def model_fn(features, labels, mode, params):
             'probabilities': tf.nn.softmax(logits),
             'logits': logits,
         }
-        predictions = predicted_classes
+        # predictions = predicted_classes
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
     # Compute loss.
@@ -103,11 +103,12 @@ if __name__ == '__main__':
                 'hidden_units': [10, 10],
                 'n_classes': 3, })
 
-    # est.train(input_fn=lambda: input_fn(csv_path=r"../data/iris/iris_training.csv", n_epoch=100))
-    #
-    # est.evaluate(input_fn=lambda: input_fn(csv_path=r"../data/iris/iris_test.csv", n_epoch=1))
+    est.train(input_fn=lambda: input_fn(csv_path=r"../data/iris/iris_training.csv", n_epoch=100))
 
-    ret = est.predict(input_fn=lambda: input_fn(csv_path=r"../data/iris/iris_test.csv", n_epoch=2, n_batch=10, features_only=True))
+    est.evaluate(input_fn=lambda: input_fn(csv_path=r"../data/iris/iris_test.csv", n_epoch=1))
+
+    ret = est.predict(
+        input_fn=lambda: input_fn(csv_path=r"../data/iris/iris_test.csv", n_epoch=2, n_batch=10, features_only=True))
 
     for r in ret:
         print(r)

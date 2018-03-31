@@ -7,3 +7,4 @@ out
 out_*
 .egg-info
 obsolete
+tmp

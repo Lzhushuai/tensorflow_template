@@ -111,11 +111,13 @@ class BaseModel(object):
 
             for _ in range(self.config.n_epoch):
                 ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
+                features, labels = ds_iter.get_next()
                 while True:
                     try:
-                        features, labels = sess.run(ds_iter.get_next())
-                        loss_val, _ = sess.run([self.loss, self.train_op], feed_dict={self.features: features,
-                                                                                      self.labels: labels})
+                        # features_val, labels_val = sess.run(ds_iter.get_next())  # wrong, ref `tf laze loading`
+                        features_val, labels_val = sess.run(features, labels)
+                        loss_val, _ = sess.run([self.loss, self.train_op], feed_dict={self.features: features_val,
+                                                                                      self.labels: labels_val})
                         logger.info("The loss of Step {} is {}".format(self.global_step, loss_val))
                     except tf.errors.OutOfRangeError:
                         break
@@ -123,7 +125,7 @@ class BaseModel(object):
             ```
 
         Args:
-            dataset(tf.data.Dataset): need to yield a tuple (features, labels)
+            dataset(tf.data.Dataset): yield a tuple (features, labels)
                 `features, labels = ds_iter.get_next()`
             *args: reserve
             **kwargs: reserve
@@ -203,6 +205,7 @@ class BaseModel(object):
             assert ckpt_dir is not None, "`ckpt_dir` is None!"
 
         ckpt_prefix = os.path.join(ckpt_dir, self.config.name)
+        os.makedirs(ckpt_prefix, exist_ok=True)
         logger.info("Saving model to {}".format(self.config.ckpt_dir))
         self.saver.save(self.sess, ckpt_prefix, self._global_step, **kwargs)
         # logger.info("Model is saved.")

@@ -5,10 +5,8 @@ from tensorflow_template.base.base_config import BaseConfig
 
 hy.set_logging_basic_config()
 
-config = BaseConfig('name')
+config = BaseConfig('test')
 
-config.ckpt_dir = './log/test/ckpt'
-config.summary_dir = './log/test/summary'
 config.save_ckpt_steps = 1
 config.save_sum_steps_eval = 1
 config.log_n_steps_train = 1
@@ -17,7 +15,7 @@ config.sess_config = tf.ConfigProto(log_device_placement=True, allow_soft_placem
 
 
 def get_dataset():
-    n = 10000
+    n = 100
     features = np.random.random((n, 10))
     labels = np.array([0, 1, 2, 3, 4] * (n // 5))
 
@@ -25,7 +23,7 @@ def get_dataset():
 
 
 dataset = get_dataset()
-dataset = dataset.shuffle(config.buffer_size).batch(config.n_batch).repeat(100)
+dataset = dataset.shuffle(config.buffer_size).batch(config.n_batch_train).repeat(5)
 
 hooks = []
 hooks.extend([tf.train.CheckpointSaverHook(config.ckpt_dir, save_steps=config.save_ckpt_steps)])
@@ -52,6 +50,6 @@ with tf.Graph().as_default() as g:
                                             summary_op=summary_loss)])
 
     with tf.train.MonitoredTrainingSession(  # session_creator=tf.train.ChiefSessionCreator(config=config.sess_config),
-                                           hooks=hooks) as sess:
+            hooks=hooks) as sess:
         while not sess.should_stop():
             _, loss_val = sess.run([train_op, loss])

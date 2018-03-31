@@ -216,10 +216,10 @@ class BasicModel(object):
                 while not sess.should_stop():
                     pred_ret = sess.run(self.ops_to_run)
                     if isinstance(self.ops_to_run, dict):
-                        for i in range(self.config.pred_n_batch):
+                        for i in range(self.config.n_batch_pred):
                             yield {k: v[i] for k, v in pred_ret.items()}
                     elif isinstance(self.ops_to_run, list):
-                        for i in range(self.config.pred_n_batch):
+                        for i in range(self.config.n_batch_pred):
                             yield pred_ret[i]
                     else:
                         for one_ret in pred_ret:
@@ -287,11 +287,11 @@ class BasicModel(object):
             dataset(tf.data.Dataset):
         """
         if mode == self.ModeKeys.TRAIN:  # use `shuffle`
-            dataset = dataset.shuffle(self.config.buffer_size).batch(self.config.n_batch).repeat(self.config.n_epoch)
+            dataset = dataset.shuffle(self.config.buffer_size).batch(self.config.n_batch_train).repeat(self.config.n_epoch_train)
         elif mode == self.ModeKeys.EVALUATE:  # n_epoch is smaller
-            dataset = dataset.batch(self.config.eval_n_batch).repeat(self.config.eval_n_epoch)
+            dataset = dataset.batch(self.config.n_batch_eval).repeat(self.config.n_epoch_eval)
         elif mode == self.ModeKeys.PREDICT:  # n_epoch is 1
-            dataset = dataset.batch(self.config.pred_n_batch).repeat(self.config.pred_n_epoch)
+            dataset = dataset.batch(self.config.n_batch_pred).repeat(self.config.n_epoch_pred)
 
         ds_iter = dataset.make_one_shot_iterator()
 

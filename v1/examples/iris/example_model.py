@@ -40,17 +40,18 @@ class ExampleModel(BaseModel):
         self.train_op = self.optimizer.minimize(self.loss, global_step=self._global_step)
 
     def train(self, dataset, buffer_size=1000, *args, **kwargs):
+        ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
+        features, labels = ds_iter.get_next()
         for _ in range(self.config.n_epoch):
             # define the train epoch
-            ds_iter = dataset.shuffle(buffer_size).batch(self.config.n_batch).make_one_shot_iterator()
-            features, labels = self.sess.run(ds_iter.get_next())
             while True:
                 # define the train step
                 try:
-                    # features, labels = self.sess.run(ds_iter.get_next())  # it's quite a error coding
-                    f, l = self.sess.run([features, labels])
+                    # it's quite a error coding
+                    # features, labels = self.sess.run(ds_iter.get_next())  
+                    features_val, labels_val = self.sess.run([features, labels])
                     loss_val, _, _ = self.sess.run([self.loss, self.train_op, self.update_op],
-                                                   feed_dict={self.features: f, self.labels: l})
+                                                   feed_dict={self.features: features_val, self.labels: labels_val})
                     acc_val = self.sess.run(self.accuracy)
                     logger.info("Step {}: loss {}, accuracy {:.3}".format(self.global_step, loss_val, acc_val))
                 except tf.errors.OutOfRangeError:
@@ -59,17 +60,17 @@ class ExampleModel(BaseModel):
 
     def evaluate(self, dataset, *args, **kwargs):
         self.mode = self.ModeKeys.EVAL
-        ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
-        features, labels = self.sess.run(ds_iter.get_next())
+        ds_iter = dataset.batch(1).make_one_shot_iterator()
+        features, labels = ds_iter.get_next()
 
         acc_ret = dict()
         i = 1
         while True:
             try:
-                f, l = self.sess.run([features, labels])
+                features_val, labels_val = self.sess.run([features, labels])
                 prediction, _ = self.sess.run([self.prediction, self.update_op],
-                                              feed_dict={self.features: f, self.labels: l})
-                logger.debug("labels is {}, prediction is {}".format(l, prediction))
+                                              feed_dict={self.features: features_val, self.labels: labels_val})
+                logger.debug("labels is {}, prediction is {}".format(labels_val, prediction))
                 # run `update_op` first, then run the `accuracy`
                 acc_val = self.sess.run(self.accuracy)
                 logger.info('Accuracy is {:.3} of {} test samples'.format(acc_val, i))
@@ -82,14 +83,15 @@ class ExampleModel(BaseModel):
 
     def predict(self, dataset, *args, **kwargs):
         self.mode = self.ModeKeys.PREDICT
-        ds_iter = dataset.shuffle(1000).batch(1).make_one_shot_iterator()
+        ds_iter = dataset.batch(1).make_one_shot_iterator()
+        features = ds_iter.get_next()
 
         pred_ret = []
         i = 1
         while True:
             try:
-                features = self.sess.run(ds_iter.get_next())
-                prediction = self.sess.run(self.prediction, feed_dict={self.features: features})
+                features_val = self.sess.run(features)
+                prediction = self.sess.run(self.prediction, feed_dict={self.features: features_val})
                 pred_ret.append(prediction)
                 logger.info("the prediction of No.{} is {}".format(i, prediction))
                 i += 1
@@ -102,12 +104,11 @@ class ExampleModel(BaseModel):
 if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
-    config = Config('ex', [4], 3)
-    config.ckpt_dir = "./log/example_ckpt"
+    config = Config('ex')
     if not os.path.exists(config.ckpt_dir):
         os.makedirs(config.ckpt_dir)
     config.n_batch = 64
-    config.n_epoch = 100
+    config.n_epoch = 5
     config.n_feature = [4]
     config.n_units = [10, 10]
     config.n_class = 3
@@ -117,8 +118,11 @@ if __name__ == '__main__':
     from examples.iris.data_iris import *
 
     ds_train = get_dataset('train')
+    logger.debug(ds_train.output_shapes)
     ds_eval = get_dataset('eval')
+    logger.debug(ds_eval.output_shapes)
     ds_predict = get_dataset('predict')
+    logger.debug(ds_predict.output_shapes)
 
     logger.debug(model.global_step)
 
