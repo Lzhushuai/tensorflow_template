@@ -1,6 +1,0 @@
-model_checkpoint_path: "D:\\OneDrive\\workspace\\proj\\huaytools\\huaytools\\tf_template\\example\\tmp\\example_model.ckpt-100"
-all_model_checkpoint_paths: "D:\\OneDrive\\workspace\\proj\\huaytools\\huaytools\\tf_template\\example\\tmp\\example_model.ckpt-60"
-all_model_checkpoint_paths: "D:\\OneDrive\\workspace\\proj\\huaytools\\huaytools\\tf_template\\example\\tmp\\example_model.ckpt-70"
-all_model_checkpoint_paths: "D:\\OneDrive\\workspace\\proj\\huaytools\\huaytools\\tf_template\\example\\tmp\\example_model.ckpt-80"
-all_model_checkpoint_paths: "D:\\OneDrive\\workspace\\proj\\huaytools\\huaytools\\tf_template\\example\\tmp\\example_model.ckpt-90"
-all_model_checkpoint_paths: "D:\\OneDrive\\workspace\\proj\\huaytools\\huaytools\\tf_template\\example\\tmp\\example_model.ckpt-100"
