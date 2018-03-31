@@ -140,7 +140,8 @@ if __name__ == '__main__':
 ```
 
 The dataset is a instance of `tf.data.Dataset`, which is few easy-to-use APIs of tensorflow.
-If you don't know how to use it, learning it from the official tutorials [Datasets Quick Start](https://www.tensorflow.org/versions/master/get_started/datasets_quickstart)
+If you don't know how to use it, learning it from the official tutorials [Datasets Quick Start](https://www.tensorflow.org/versions/master/get_started/datasets_quickstart).
+
 Or see the **data_helper.py** of each [examples](./examples).
 
 ## Examples
