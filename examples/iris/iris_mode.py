@@ -8,7 +8,7 @@ from tensorflow_template.base.base_model import BasicModel, BaseConfig
 #                     level=logging.INFO)
 # logger = logging.getLogger(__name__)
 # hy.set_logging_basic_config(level=logging.DEBUG)
-tf.logging.set_verbosity(tf.logging.INFO)
+# tf.logging.set_verbosity(tf.logging.INFO)
 
 
 # print(tf.logging.get_verbosity())

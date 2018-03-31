@@ -5,6 +5,7 @@ import huaytools as hy
 
 from tensorflow_template.base.base_config import BaseConfig
 
+tf.logging.set_verbosity(tf.logging.INFO)  # if you want to see the log info
 
 class ModeKeys(object):
     """
