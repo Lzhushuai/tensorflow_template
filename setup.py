@@ -7,8 +7,8 @@
 from setuptools import setup, find_packages
 
 install_requires = [
-    'bunch',
-    'huaytools'
+    'huaytools',
+    # 'bunch',  # use huaytools.bunch instead
     # 'tensorflow',  # install it beforehand
 ]
 

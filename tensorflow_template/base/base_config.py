@@ -1,7 +1,7 @@
 import os
 import doctest
 import tensorflow as tf
-from bunch import Bunch
+from huaytools import Bunch
 
 
 class BaseConfig(Bunch):
@@ -12,7 +12,7 @@ class BaseConfig(Bunch):
             >>> config = BaseConfig('', n_batch=11, aaa="AAA")
             >>> config.ttt = 'TTT'
             >>> print(config.n_batch_train)
-            11
+            64
             >>> print(config.aaa)
             AAA
             >>> print(config.ttt)
@@ -47,7 +47,7 @@ class BaseConfig(Bunch):
         self.max_steps = None  # If defined, it will add a `tf.train.StopAtStepHook`
         """How to use `max_steps`. 
             You can first train the model forever. 
-            Than set the step of over-fitting from tensorboard as `max_steps` to re-train the model
+            Than learn the step of over-fitting from tensorboard as `max_steps` to re-train the model
             However, if the model is very big, and have to train so long. It will be no use with this method.
         """
 

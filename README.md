@@ -43,11 +43,11 @@ All you need to do is fill the model function with some necessary and custom [tf
 The basic part:
 - the neural net
 - the output for predict (self.logits & self.prediction)
-- the loss for evaluate and train
-- the train_op for train
+- the loss
+- the train_op
 
 others:
-- the metrics_op for evaluate or train (such as `tf.metrics.accuracy`)
+- the metrics_op (such as `tf.metrics.accuracy`)
   
 For reuse the same model function in different mode(train/eval/predict), 
 you have to make it return different ops with different mode 
