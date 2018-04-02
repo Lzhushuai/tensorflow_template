@@ -42,7 +42,7 @@ All you need to do is fill the model function with some necessary and custom [tf
     
 The basic part:
 - the neural net
-- the output for predict (self.logits & self.prediction)
+- the output for predict (such as logits, argmax(logits), softmax(logits))
 - the loss
 - the train_op
 
