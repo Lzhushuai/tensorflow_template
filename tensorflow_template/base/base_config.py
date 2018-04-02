@@ -35,7 +35,7 @@ class BaseConfig(Bunch):
         self.n_class = None
 
         # config for `tf.data.Dataset`
-        self.buffer_size = 1000  # dataset.shuffle(buffer_size)
+        self.shuffle_buffer_size = 10000  # dataset.shuffle(buffer_size)
         self.n_batch_train = 64  # for train
         self.n_epoch_train = 30  # for train
         self.n_epoch_eval = 1
@@ -66,7 +66,7 @@ class BaseConfig(Bunch):
         self.save_sum_secs_eval = self.save_sum_secs_train
 
         # config for `tf.train.LoggingTensorHook` of train
-        self.log_n_steps_train = 10
+        self.log_n_steps_train = 1
         self.log_n_secs_train = None
         # config for `tf.train.LoggingTensorHook` of evaluate
         self.log_n_steps_eval = self.log_n_steps_train

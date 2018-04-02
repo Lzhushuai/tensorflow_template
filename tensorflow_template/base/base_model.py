@@ -7,6 +7,7 @@ from tensorflow_template.base.base_config import BaseConfig
 
 tf.logging.set_verbosity(tf.logging.INFO)  # if you want to see the log info
 
+
 class ModeKeys(object):
     """
     Standard names for model modes.
@@ -218,10 +219,13 @@ class BaseModel(object):
                     pred_ret = sess.run(self.ops_to_run)
                     if isinstance(self.ops_to_run, dict):
                         for i in range(self.config.n_batch_pred):
-                            yield {k: v[i] for k, v in pred_ret.items()}
+                            try:  # the last batch may smaller than n_batch
+                                yield {k: v[i] for k, v in pred_ret.items()}
+                            except IndexError:
+                                break
                     elif isinstance(self.ops_to_run, list):
-                        for i in range(self.config.n_batch_pred):
-                            yield pred_ret[i]
+                        for ret in zip(*pred_ret):
+                            yield ret
                     else:
                         for one_ret in pred_ret:
                             yield one_ret
@@ -288,7 +292,8 @@ class BaseModel(object):
             dataset(tf.data.Dataset):
         """
         if mode == self.ModeKeys.TRAIN:  # use `shuffle`
-            dataset = dataset.shuffle(self.config.buffer_size).batch(self.config.n_batch_train).repeat(self.config.n_epoch_train)
+            dataset = dataset.shuffle(self.config.shuffle_buffer_size).batch(self.config.n_batch_train).repeat(
+                self.config.n_epoch_train)
         elif mode == self.ModeKeys.EVALUATE:  # n_epoch is smaller
             dataset = dataset.batch(self.config.n_batch_eval).repeat(self.config.n_epoch_eval)
         elif mode == self.ModeKeys.PREDICT:  # n_epoch is 1

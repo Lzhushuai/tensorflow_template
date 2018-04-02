@@ -152,7 +152,8 @@ Or see the **data_helper.py** of each [examples](./examples).
 - mnist classification 
   - [[code](./examples/mnist)] with tf_template
   - ref: [TF Tutorials](https://www.tensorflow.org/tutorials/layers)
-- cnn-text-classification [TODO]
+- cnn-text-classification
+  - [[code](./examples/nlp/cnn_sentence_classification)] with tf_template
   - The original [paper](http://arxiv.org/abs/1408.5882) and [github](https://github.com/yoonkim/CNN_sentence)
     
 ## Contributing

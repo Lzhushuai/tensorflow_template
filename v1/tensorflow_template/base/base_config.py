@@ -1,5 +1,5 @@
 import os
-from bunch import Bunch
+from huaytools import Bunch
 
 
 class Config(Bunch):

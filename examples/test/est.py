@@ -23,12 +23,12 @@ def model_fn(features, labels, mode, params):
     # Compute predictions.
     predicted_classes = tf.argmax(logits, axis=1)
     if mode == tf.estimator.ModeKeys.PREDICT:
-        predictions = {
-            'class_ids': predicted_classes[:, tf.newaxis],  # change shape from [None] to [None, 1]
-            'probabilities': tf.nn.softmax(logits),
-            'logits': logits,
-        }
-        # predictions = predicted_classes
+        # predictions = {
+        #     'class_ids': predicted_classes[:, tf.newaxis],  # change shape from [None] to [None, 1]
+        #     'probabilities': tf.nn.softmax(logits),
+        #     'logits': logits,
+        # }
+        predictions = predicted_classes
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
     # Compute loss.

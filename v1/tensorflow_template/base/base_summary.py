@@ -3,7 +3,7 @@ A summary writer helper
 """
 import os
 import tensorflow as tf
-from bunch import Bunch
+from huaytools import Bunch
 
 
 class Summary(object):

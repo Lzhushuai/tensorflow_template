@@ -174,7 +174,7 @@ if __name__ == '__main__':
     config.filter_sizes = [3, 4, 5]  # Comma-separated filter sizes
     config.n_filter = 128
     # config.n_class = 2
-    # config.vocab_size = 50000
+    config.vocab_size = 50000
     config.l2_reg_lambda = 0.0
     config.learning_rate = 1e-3
 

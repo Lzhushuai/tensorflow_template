@@ -23,7 +23,7 @@ def get_dataset():
 
 
 dataset = get_dataset()
-dataset = dataset.shuffle(config.buffer_size).batch(config.n_batch_train).repeat(5)
+dataset = dataset.shuffle(config.shuffle_buffer_size).batch(config.n_batch_train).repeat(5)
 
 hooks = []
 hooks.extend([tf.train.CheckpointSaverHook(config.ckpt_dir, save_steps=config.save_ckpt_steps)])
