@@ -6,6 +6,8 @@ from tensorflow.python.platform import gfile
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def _read32(bytestream):
     dt = np.dtype(np.uint32).newbyteorder('>')
@@ -25,7 +27,7 @@ def extract_images(f):
       ValueError: If the bytestream does not start with 2051.
 
     """
-    tf.logging.info('Extracting' + f.name)
+    logger.info('Extracting' + f.name)
     with gzip.GzipFile(fileobj=f) as bytestream:
         magic = _read32(bytestream)
         if magic != 2051:
@@ -63,7 +65,7 @@ def extract_labels(f, one_hot=False, num_classes=10):
     Raises:
       ValueError: If the bystream doesn't start with 2049.
     """
-    tf.logging.info('Extracting ' + f.name)
+    logger.info('Extracting ' + f.name)
     with gzip.GzipFile(fileobj=f) as bytestream:
         magic = _read32(bytestream)
         if magic != 2049:
@@ -77,7 +79,7 @@ def extract_labels(f, one_hot=False, num_classes=10):
         return labels.astype(np.int32)
 
 
-def get_data(data_dir='../data/mnist', one_hot=False):
+def get_data(data_dir='./data', one_hot=False):
     data_path = os.path.join(data_dir, 'train-images-idx3-ubyte.gz')
     with gfile.Open(data_path, 'rb') as f:
         train_images = extract_images(f)
@@ -94,8 +96,8 @@ def get_data(data_dir='../data/mnist', one_hot=False):
     with gfile.Open(data_path, 'rb') as f:
         test_labels = extract_labels(f, one_hot=one_hot)
 
-    tf.logging.debug("train_images shape {}, train_labels shape {}".format(train_images.shape, train_labels.shape))
-    tf.logging.debug("test_images shape {}, test_labels shape {}".format(test_images.shape, test_labels.shape))
+    logger.debug("train_images shape {}, train_labels shape {}".format(train_images.shape, train_labels.shape))
+    logger.debug("test_images shape {}, test_labels shape {}".format(test_images.shape, test_labels.shape))
 
     return train_images, train_labels, test_images, test_labels
 
