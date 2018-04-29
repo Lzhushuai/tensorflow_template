@@ -7,6 +7,4 @@ out
 out_*
 .egg-info
 obsolete
-tmp
-venv
 __pycache__
